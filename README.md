@@ -33,9 +33,9 @@ Dump LSASS:
 	
     --duplicate-elevate Look for existing lsass handle to duplicate and elevate
 	
-    --asr		Attempt LSASS dump using ASR bypass (win10/11/2019) (no signature/no encrypt)
+    --asr               Attempt LSASS dump using ASR bypass (win10/11/2019) (no signature/no encrypt)
 	
-    --driver 		Use Process Explorer driver to open lsass handle (bypass PPL) and dump lsass
+    --driver            Use Process Explorer driver to open lsass handle (bypass PPL) and dump lsass
 	
     --kill [processID]  Use Process Explorer driver to kill process and exit
 
