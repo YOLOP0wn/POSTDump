@@ -61,6 +61,16 @@ Dump LSASS:
 - You can build using .NET Framework 4.5.1 as-is.
 - Depending of the CLR version installed on the system where you execute PostDump, you may need to downgrade to .NET 3.5 [more info here](https://learn.microsoft.com/fr-fr/dotnet/framework/migration-guide/versions-and-dependencies)
 
+## Sponsors
+
+<div align="center">
+  <a href="https://www.post.lu/business/produits-et-services/cyberforce" title="Follow">
+    <img width="150" src="https://upload.wikimedia.org/wikipedia/de/c/c6/Post_Luxembourg_Logo_2013.png">
+  </a>
+</div>
+
+I work at *POST Luxembourg* and thank them for allocating some time for me to develop and maintain this project! Visit POST website at https://www.post.lu/business/produits-et-services/cyberforce.
+
 
 ## Credits
 - [s4ntiago_p](https://twitter.com/s4ntiago_p) for the awesome NanoDump tool
