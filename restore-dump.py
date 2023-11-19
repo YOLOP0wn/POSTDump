@@ -40,7 +40,7 @@ def decrypt(file1_b):
     xord_byte_array = bytearray(size)
 
     for i in range(size):
-        xord_byte_array[i] = file1_b[i] ^ 0x6f
+        xord_byte_array[i] = file1_b[i] ^ key
 
     return xord_byte_array
 
