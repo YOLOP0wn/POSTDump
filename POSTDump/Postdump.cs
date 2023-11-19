@@ -165,9 +165,11 @@ namespace POSTDump
             }
 
 
-            if (driver && dc.hProcess == IntPtr.Zero)
+            if (dc.hProcess == IntPtr.Zero)
             {
-                Console.WriteLine("Driver technic failed, trying default method..");
+                if (driver)
+                    Console.WriteLine("Driver technic failed, trying default method..");
+                
                 if (Elevate)
                 {
                     if (!Handle.GetProcessHandle(lsassid, out procHandle, (uint)0x1000)) //PROCESS_QUERY_LIMITED_INFORMATION
