@@ -40,8 +40,6 @@ Dump LSASS:
     --kill [processID]  Use Process Explorer driver to kill process and exit
 
     --help              Display this help screen.
-  
-    --version           Display version information.
 
 
 ## Evasion
