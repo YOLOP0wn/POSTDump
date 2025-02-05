@@ -21,7 +21,7 @@ namespace POSTMiniDump
             if (InvalidSig)
             {
                 Utils.generate_invalid_sig(out dc.Signature, out dc.Version, out dc.ImplementationVersion);
-                Console.WriteLine("[*] Using invalid signature");
+                //MessageBox.Show("[*] Using invalid signature");
             }
 
             header.Signature = dc.Signature;
@@ -49,7 +49,7 @@ namespace POSTMiniDump
 
             if (!Utils.append(dc, header_bytes, (uint)header_bytesalloc.Length))
             {
-                Console.WriteLine("Failed to write header");
+                //MessageBox.Show("Failed to write header");
                 return false;
             }
             Marshal.FreeHGlobal(header_bytes);
@@ -79,29 +79,29 @@ namespace POSTMiniDump
             system_info_directory.Rva = 0; // this is calculated and written later
             if (!write_directory(dc, system_info_directory))
             {
-                Console.WriteLine("Failed to write directory");
+                //MessageBox.Show("Failed to write directory");
                 return false;
             }
 
-            //Console.WriteLine("Writing directory: ModuleListStream");
+            //MessageBox.Show("Writing directory: ModuleListStream");
             Data.MiniDumpDirectory module_list_directory = new Data.MiniDumpDirectory();
             module_list_directory.StreamType = 4;
             module_list_directory.DataSize = 0; // this is calculated and written later
             module_list_directory.Rva = 0; // this is calculated and written later
             if (!write_directory(dc, module_list_directory))
             {
-                Console.WriteLine("Failed to write directory");
+                //MessageBox.Show("Failed to write directory");
                 return false;
             }
 
-            //Console.WriteLine("Writing directory: Memory64ListStream");
+            //MessageBox.Show("Writing directory: Memory64ListStream");
             Data.MiniDumpDirectory memory64_list_directory = new Data.MiniDumpDirectory();
             memory64_list_directory.StreamType = 9;
             memory64_list_directory.DataSize = 0; // this is calculated and written later
             memory64_list_directory.Rva = 0; // this is calculated and written later
             if (!write_directory(dc, memory64_list_directory))
             {
-                Console.WriteLine("Failed to write directory");
+                //MessageBox.Show("Failed to write directory");
                 return false;
             }
 
@@ -113,7 +113,7 @@ namespace POSTMiniDump
             Data.OsVersionInfo os = new Data.OsVersionInfo();
             Data.MiniDumpSystemInfo system_info = new Data.MiniDumpSystemInfo();
 
-            //Console.WriteLine("Writing SystemInfoStream");
+            //MessageBox.Show("Writing SystemInfoStream");
 
             RtlGetVersion(out os);            
             uint OSMajorVersion = os.MajorVersion;
@@ -163,7 +163,7 @@ namespace POSTMiniDump
             long stream_rva = dc.rva;
             if (!Utils.append(dc, system_info_bytes, (uint)Data.SIZE_OF_SYSTEM_INFO_STREAM))
             {
-                Console.WriteLine("Failed to write the SystemInfoStream");
+                //MessageBox.Show("Failed to write the SystemInfoStream");
                 return false;
             }
             Marshal.FreeHGlobal(system_info_bytes);
@@ -188,7 +188,7 @@ namespace POSTMiniDump
             // write the length
             if (!Utils.append(dc, LengthPtr, 4))
             {
-                Console.WriteLine("Failed to write the SystemInfoStream");
+                //MessageBox.Show("Failed to write the SystemInfoStream");
                 return false;
             }
             LengthHandle.Free();
@@ -198,7 +198,7 @@ namespace POSTMiniDump
             IntPtr CSDVersionAddr = CSDVersionHandle.AddrOfPinnedObject();
             if (!Utils.append(dc, CSDVersionAddr, (uint)Environment.OSVersion.ServicePack.Length))
             {
-                Console.WriteLine("Failed to write the SystemInfoStream");
+                //MessageBox.Show("Failed to write the SystemInfoStream");
                 return false;
             }
             CSDVersionHandle.Free();
@@ -220,7 +220,7 @@ namespace POSTMiniDump
             moduleslist = Modules.find_modules(dc.hProcess);
             if (moduleslist.Count == 0)
             {
-                Console.WriteLine("Could not find modules");
+                //MessageBox.Show("Could not find modules");
                 return null;
             }
             
@@ -239,7 +239,7 @@ namespace POSTMiniDump
                 // write the length of the name
                 if (!Utils.append(dc, namelengthbuffer, 4))
                 {
-                    Console.WriteLine("Failed to write the ModuleListStream");
+                    //MessageBox.Show("Failed to write the ModuleListStream");
                     return null;
                 }
                 Marshal.FreeHGlobal(namelengthbuffer);
@@ -247,7 +247,7 @@ namespace POSTMiniDump
                 // write the path
                 if (!Utils.append(dc, module.dll_name.Buffer, full_name_length))
                 {
-                    Console.WriteLine("Failed to write the ModuleListStream");
+                    //MessageBox.Show("Failed to write the ModuleListStream");
                     return null;
                 }
             }
@@ -258,7 +258,7 @@ namespace POSTMiniDump
             Utils.MemCopy(modulesnumber, (uint)number_of_modules, 4);
             if (!Utils.append(dc, modulesnumber, 4))
             {
-                Console.WriteLine("Failed to write the ModuleListStream");
+                //MessageBox.Show("Failed to write the ModuleListStream");
                 return null;
             }
             
@@ -319,7 +319,7 @@ namespace POSTMiniDump
 
                 if (!Utils.append(dc, module_bytes, (uint)Data.SIZE_OF_MINIDUMP_MODULE))
                 {
-                    Console.WriteLine("Failed to write the ModuleListStream");
+                    //MessageBox.Show("Failed to write the ModuleListStream");
                     return null;
                 }
             }
@@ -360,7 +360,7 @@ namespace POSTMiniDump
             memory_ranges = get_memory_range(dc, modulelist);
             if (memory_ranges.Count == 0)
             {
-                Console.WriteLine("Failed to get memory ranges");
+                //MessageBox.Show("Failed to get memory ranges");
                 return null;
             }
 
@@ -372,14 +372,14 @@ namespace POSTMiniDump
             Utils.MemCopy(number_of_rangesBuff, number_of_ranges, 8);
             if (!Utils.append(dc, number_of_rangesBuff, 8))
             {
-                Console.WriteLine("Failed to write Memory64ListStream");
+                //MessageBox.Show("Failed to write Memory64ListStream");
                 return null;
             }
 
             // make sure we don't overflow stream_size
             if (16 + 16 * number_of_ranges > 0xffffffff)
             {
-                Console.WriteLine("Too many ranges!");
+                //MessageBox.Show("Too many ranges!");
                 Marshal.FreeHGlobal(number_of_rangesBuff);
                 return null;
             }
@@ -391,7 +391,7 @@ namespace POSTMiniDump
             Utils.MemCopy(base_rvaBuff, (ulong)base_rva, 8);
             if (!Utils.append(dc, base_rvaBuff, 8))
             {
-                Console.WriteLine("Failed to write the Memory64ListStream");
+                //MessageBox.Show("Failed to write the Memory64ListStream");
                 Marshal.FreeHGlobal(base_rvaBuff);
                 return null;
             }
@@ -403,7 +403,7 @@ namespace POSTMiniDump
                 Utils.MemCopy(buffer, d, 8);
                 if (!Utils.append(dc, buffer, 8))
                 {
-                    Console.WriteLine("Failed to write the Memory64ListStream");
+                    //MessageBox.Show("Failed to write the Memory64ListStream");
                     Marshal.FreeHGlobal(buffer);
                     return null;
                 }
@@ -413,7 +413,7 @@ namespace POSTMiniDump
                 Utils.MemCopy(buffer, range.DataSize, 8);
                 if (!Utils.append(dc, buffer, 8))
                 {
-                    Console.WriteLine("Failed to write the Memory64ListStream");
+                    //MessageBox.Show("Failed to write the Memory64ListStream");
                     Marshal.FreeHGlobal(buffer);
                     return null;
                 }
@@ -437,7 +437,7 @@ namespace POSTMiniDump
                 IntPtr buffer = Marshal.AllocHGlobal((int)range.DataSize);
                 if (buffer == IntPtr.Zero)
                 {
-                    Console.WriteLine("Failed to HeapAlloc!");
+                    //MessageBox.Show("Failed to HeapAlloc!");
                     return null;
                 }
                 uint ByteRead = 0;
@@ -445,18 +445,18 @@ namespace POSTMiniDump
                 Data.NTSTATUS status = NTRVM(dc.hProcess, range.StartOfMemoryRange, buffer, (uint)range.DataSize, ref ByteRead);
                 if (status != 0 && status != Data.NTSTATUS.PartialCopy)
                 {
-                    Console.WriteLine($"Failed to read memory range {curr_range.StartOfMemoryRange}");
+                    //MessageBox.Show($"Failed to read memory range {curr_range.StartOfMemoryRange}");
                 }
 
                 if ((UInt32)range.DataSize > 0xffffffff)
                 {
-                    Console.WriteLine("The current range is larger that the 32-bit address space!");
+                    //MessageBox.Show("The current range is larger that the 32-bit address space!");
                     range.DataSize = (ulong)0xffffffff;
                 }
 
                 if (!Utils.append(dc, buffer, (uint)range.DataSize))
                 {
-                    Console.WriteLine("Failed to write the Memory64ListStream");
+                    //MessageBox.Show("Failed to write the Memory64ListStream");
                     Utils.intFree(buffer);
                     buffer = IntPtr.Zero;
                     return null;
@@ -473,7 +473,7 @@ namespace POSTMiniDump
         private static List<Data.MiniDumpMemoryDescriptor64> get_memory_range(Data.dump_context dc, List<Data.PModuleInfo> module_list)
         {
 
-            //Console.WriteLine("Getting memory ranges");
+            //MessageBox.Show("Getting memory ranges");
             IntPtr prochandle = dc.hProcess;
             Data.MEMORY_BASIC_INFORMATION mbi = new Data.MEMORY_BASIC_INFORMATION();
             Data.MEMORY_INFORMATION_CLASS mic = new Data.MEMORY_INFORMATION_CLASS();
@@ -493,6 +493,7 @@ namespace POSTMiniDump
                 Data.NTSTATUS status = NTQVM(dc.hProcess, current_address, mic, ref mbi, (ulong)Convert.ToInt64(Marshal.SizeOf(mbi)), ref returnL);
                 if (status != Data.NTSTATUS.Success)
                 {
+                    //MessageBox.Show("ERROR");
                     break;
                 }
                 base_address = mbi.BaseAddress;
@@ -537,7 +538,7 @@ namespace POSTMiniDump
                 }
                 if (dc.BaseAddress == base_address)
                 {
-                    Console.WriteLine("nop");
+                    //MessageBox.Show("nop");
                     continue;
                 }
 
@@ -553,7 +554,7 @@ namespace POSTMiniDump
 
             if (ranges_list.Count == 0)
             {
-                Console.WriteLine("Failed to enumerate memory ranges");
+                //MessageBox.Show("Failed to enumerate memory ranges");
                 return null;
             }
 
@@ -565,23 +566,26 @@ namespace POSTMiniDump
         {
             if (!write_header(dc, InvalidSig))
             {
+                //MessageBox.Show("Failed to write_header!");
                 return false;
             }
             
             if (!write_directories(dc))
             {
+                //MessageBox.Show("Failed to write_directories!");
                 return false;
             }
             
             if (!write_system_info_stream(dc))
             {
+                //MessageBox.Show("Failed to write_system_info_stream!");
                 return false;
             }
             
             List<Data.PModuleInfo> modules_list = write_module_list_stream(dc);
             if (modules_list.Count == 0)
             {
-                Console.WriteLine("Failed to get modules list!");
+                //MessageBox.Show("Failed to get modules list!");
                 return false;
             }
 
@@ -589,15 +593,15 @@ namespace POSTMiniDump
             memory_ranges = write_memory64_list_stream(dc, modules_list);
             if (memory_ranges.Count == 0)
             {
-                Console.WriteLine("Failed to get memory ranges!");
+                //MessageBox.Show("Failed to get memory ranges!");
                 return false;
             }
-            Console.WriteLine($"[*] Dump succeed! size: {(dc.rva / 1024) / 1024} MiB");
+            //MessageBox.Show($"[*] Dump succeed! size: {(dc.rva / 1024) / 1024} MiB");
 
             if (encrypt)
             {
                 Utils.encrypt_dump(dc.BaseAddress, dc.rva);
-                Console.WriteLine("[*] Dump encrypted!");
+                //MessageBox.Show("[*] Dump encrypted!");
             }
 
             return true;

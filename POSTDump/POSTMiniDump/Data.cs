@@ -175,33 +175,21 @@ namespace POSTMiniDump
         [Flags]
         public enum FileAccess : uint
         {
-            DELETE = 0x00010000,
-            READ_CONTROL = 0x00020000,
-            WRITE_DAC = 0x00040000,
-            WRITE_OWNER = 0x00080000,
-            SYNCHRONIZE = 0x00100000,
-            STANDARD_RIGHTS_REQUIRED = 0x000F0000,
-            STANDARD_RIGHTS_READ = READ_CONTROL,
-            STANDARD_RIGHTS_WRITE = READ_CONTROL,
-            STANDARD_RIGHTS_EXECUTE = READ_CONTROL,
-            FILE_READ_DATA = 0x0001,
-            FILE_LIST_DIRECTORY = 0x0001,
+            ReadControl = 0x20000,
+            Synchronize = 0x100000,
+            StandardRightsWrite = ReadControl,
+
             FILE_WRITE_DATA = 0x0002,
-            FILE_ADD_FILE = 0x0002,
             FILE_APPEND_DATA = 0x0004,
-            FILE_ADD_SUBDIRECTORY = 0x0004,
-            FILE_CREATE_PIPE_INSTANCE = 0x0004,
-            FILE_READ_EA = 0x0008,
             FILE_WRITE_EA = 0x0010,
-            FILE_EXECUTE = 0x0020,
-            FILE_TRAVERSE = 0x0020,
-            FILE_DELETE_CHILD = 0x0040,
-            FILE_READ_ATTRIBUTES = 0x0080,
             FILE_WRITE_ATTRIBUTES = 0x0100,
-            FILE_ALL_ACCESS = STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1FF,
-            FILE_GENERIC_READ = STANDARD_RIGHTS_READ | FILE_READ_DATA | FILE_READ_ATTRIBUTES | FILE_READ_EA | SYNCHRONIZE,
-            FILE_GENERIC_WRITE = STANDARD_RIGHTS_WRITE | FILE_WRITE_DATA | FILE_WRITE_ATTRIBUTES | FILE_WRITE_EA | FILE_APPEND_DATA | SYNCHRONIZE,
-            FILE_GENERIC_EXECUTE = STANDARD_RIGHTS_EXECUTE | FILE_READ_ATTRIBUTES | FILE_EXECUTE | SYNCHRONIZE
+
+            FILE_GENERIC_WRITE = StandardRightsWrite |
+                FILE_WRITE_DATA |
+                FILE_WRITE_ATTRIBUTES |
+                FILE_WRITE_EA |
+                FILE_APPEND_DATA |
+                Synchronize,
         }
 
         public enum ProcessorArchitecture

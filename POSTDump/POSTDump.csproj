@@ -1,11 +1,57 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{2A281106-8255-4ACB-9A45-E19E81AD3EE8}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>POSTDump</RootNamespace>
+    <AssemblyName>POSTDump</AssemblyName>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
     <DefineConstants>
     </DefineConstants>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>7.3</LangVersion>
@@ -14,33 +60,69 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
-    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
-    <ProjectGuid>{E54195F0-060C-4B24-98F2-AD9FB5351045}</ProjectGuid>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ASR.cs" />
+    <Compile Include="Driver.cs" />
     <Compile Include="ISyscall.cs" />
     <Compile Include="Handle.cs" />
-    <Compile Include="Driver.cs" />
+    <Compile Include="MiniDump\Crypto\BCrypt.cs" />
+    <Compile Include="MiniDump\Crypto\Crypto.cs" />
+    <Compile Include="MiniDump\Decryptor\Cloudap_.cs" />
+    <Compile Include="MiniDump\Decryptor\Credman.cs" />
+    <Compile Include="MiniDump\Decryptor\Dpapi_.cs" />
+    <Compile Include="MiniDump\Decryptor\KerberosSessions.cs" />
+    <Compile Include="MiniDump\Decryptor\Kerberos_.cs" />
+    <Compile Include="MiniDump\Decryptor\LiveSsp_.cs" />
+    <Compile Include="MiniDump\Decryptor\LogonSessions.cs" />
+    <Compile Include="MiniDump\Decryptor\lsadecryptor_lsa_decryptor.cs" />
+    <Compile Include="MiniDump\Decryptor\lsadecryptor_lsa_decryptor_nt6.cs" />
+    <Compile Include="MiniDump\Decryptor\Msv1_.cs" />
+    <Compile Include="MiniDump\Decryptor\Rdp_.cs" />
+    <Compile Include="MiniDump\Decryptor\Ssp_.cs" />
+    <Compile Include="MiniDump\Decryptor\Tspkg_.cs" />
+    <Compile Include="MiniDump\Decryptor\WDigest_.cs" />
+    <Compile Include="MiniDump\Helpers.cs" />
+    <Compile Include="MiniDump\Program.cs" />
+    <Compile Include="MiniDump\Streams\Directory.cs" />
+    <Compile Include="MiniDump\Streams\Header.cs" />
+    <Compile Include="MiniDump\Streams\Memory64ListStream.cs" />
+    <Compile Include="MiniDump\Streams\Memory86ListStream.cs" />
+    <Compile Include="MiniDump\Streams\MinidumpMemory.cs" />
+    <Compile Include="MiniDump\Streams\ModuleList.cs" />
+    <Compile Include="MiniDump\Streams\Parse.cs" />
+    <Compile Include="MiniDump\Streams\SystemInfo.cs" />
+    <Compile Include="MiniDump\Templates\cloudap_templates.cs" />
+    <Compile Include="MiniDump\Templates\credman_templates.cs" />
+    <Compile Include="MiniDump\Templates\dpapi_templates.cs" />
+    <Compile Include="MiniDump\Templates\kerberos_templates.cs" />
+    <Compile Include="MiniDump\Templates\livessp_templates.cs" />
+    <Compile Include="MiniDump\Templates\lsa_templates.cs" />
+    <Compile Include="MiniDump\Templates\lsa_template_nt6.cs" />
+    <Compile Include="MiniDump\Templates\msv_templates.cs" />
+    <Compile Include="MiniDump\Templates\rdp_templates.cs" />
+    <Compile Include="MiniDump\Templates\ssp_templates.cs" />
+    <Compile Include="MiniDump\Templates\tspkg_templates.cs" />
+    <Compile Include="MiniDump\Templates\wdigest_templates.cs" />
     <Compile Include="PE.cs" />
+    <Compile Include="Postdump.cs" />
     <Compile Include="POSTMiniDump\Data.cs" />
     <Compile Include="POSTMiniDump\MiniDump.cs" />
     <Compile Include="POSTMiniDump\Modules.cs" />
     <Compile Include="POSTMiniDump\Utils.cs" />
-    <Compile Include="Postdump.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

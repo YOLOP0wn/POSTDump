@@ -32,18 +32,17 @@ namespace POSTMiniDump
                 bool success = read_ldr_entry(Hprocess, ldr_entry_address, out ldr_entry, out base_dll_name);
                 if (!success)
                 {
-                    Console.WriteLine("Could not read ldr entry");
+                    //MessageBox.Show("Could not read ldr entry");
                     return null;
                 }
 
-                    
 
                 for (int i = 0; i < important_modules.Length; i++)
                 {
                     if (important_modules[i].Equals(base_dll_name.ToString(), StringComparison.OrdinalIgnoreCase))
                     {
                             
-                        //Console.WriteLine($"Found {important_modules[i]} at "+ ldr_entry_address.ToString("x"));
+                        //MessageBox.Show($"Found {important_modules[i]} at "+ ldr_entry_address.ToString("x"));
                         Data.PModuleInfo new_module = add_new_module(Hprocess, ldr_entry);
                         moduleslist.Add(new_module);
                         dlls_found++;
@@ -75,7 +74,7 @@ namespace POSTMiniDump
 
             if (status != Data.NTSTATUS.Success)
             {
-                Console.WriteLine("Could not read module information at: 0x{0:x}", (ulong)ldr_entry_address);
+                //MessageBox.Show("Could not read module information at: 0x{0:x}", ldr_entry_address.ToString("X"));
                 base_dll_name = new Data.UNICODE_STRING();
                 return false;
             }
@@ -86,7 +85,7 @@ namespace POSTMiniDump
             Data.NTSTATUS status2 = NTRVM(Hprocess, ldr_entry.BaseDllName.Buffer, base_dll_name.Buffer, (uint)ldr_entry.BaseDllName.Length, ref r);
             if (status2 != Data.NTSTATUS.Success)
             {
-                Console.WriteLine("Could not read module information at: 0x{0:x}",(ulong)ldr_entry.BaseDllName.Buffer);
+                //MessageBox.Show("Could not read module information at: 0x{0:x}", ldr_entry_address.ToString("X"));
                 return false;
             }
  
@@ -113,7 +112,7 @@ namespace POSTMiniDump
 
             if (status != Data.NTSTATUS.Success)
             {
-                Console.WriteLine("Could not get LDR address");
+                //MessageBox.Show("Could not get LDR address");
                 return IntPtr.Zero;
             }
 
@@ -127,7 +126,7 @@ namespace POSTMiniDump
 
             if (status != Data.NTSTATUS.Success)
             {
-                Console.WriteLine(status.ToString());
+                //MessageBox.Show(status.ToString());
                 return IntPtr.Zero;
             }
 
@@ -168,7 +167,7 @@ namespace POSTMiniDump
             Data.NTSTATUS status = NTRVM(Hprocess, ldr_entry.FullDllName.Buffer, new_module.dll_name.Buffer, (uint)name_size, ref l);
             if (status != Data.NTSTATUS.Success)
             {
-                Console.WriteLine("Failed to read dllname buffer with error "+ status.ToString() );
+                //MessageBox.Show("Failed to read dllname buffer with error "+ status.ToString() );
                 return null;
             }
             

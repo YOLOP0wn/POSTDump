@@ -33,6 +33,10 @@ Dump LSASS:
 	
     --duplicate-elevate Look for existing lsass handle to duplicate and elevate
 	
+	--live				Parse creds from memory without writing into file on disk
+	
+	--fromfile [file]	Parse creds from dump file
+	
     --asr               Attempt LSASS dump using ASR bypass (win10/11/2019) (no signature/no encrypt)
 	
     --driver            Use Process Explorer driver to open lsass handle (bypass PPL) and dump lsass
@@ -47,7 +51,7 @@ Dump LSASS:
 - No memory Allocation/Protection call is performed for indirect syscall, instead, free RWX codecave found in the current process are used
 - ETW patching
 - No call to MiniDumpWriteDump
-
+- Live lsass creds parsing (no dump writing)
 
 ## Improvements idea
 - Implement more dump technics (seclogon, PPLMedic, Shtinkering ..)
@@ -75,6 +79,7 @@ I work at *POST Luxembourg* and thank them for allocating some time for me to de
 - [Yaxser](https://github.com/Yaxser/Backstab) (procexp driver)
 - [SECFORCE] (https://github.com/SECFORCE/SharpWhispers) for finding RWX codecave
 - [0xAbdullah](https://github.com/0xAbdullah/) for [ASR](https://github.com/0xAbdullah/Offensive-Snippets/blob/main/C%23/PInvoke/ASR_bypass_to_dump_LSASS.cs) technic 
+- [cube0x0] (https://github.com/cube0x0/MiniDump) for Minidump lib to parse lsass
 
 
 ## Disclaimer

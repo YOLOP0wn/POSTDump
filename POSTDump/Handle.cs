@@ -40,6 +40,9 @@ namespace POSTDump
         delegate Data.NTSTATUS NtOpenProcess(ref IntPtr processHandle, uint desiredAccess, ref Data.OBJECT_ATTRIBUTES objectAttributes, ref Data.CLIENT_ID clientId);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        delegate bool NtGetNextProcess(IntPtr handle, uint MAX_ALLOWED, uint param3, uint param4, out IntPtr outHandle);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         delegate Data.NTSTATUS NtDuplicateObject(IntPtr SourceProcessHandle, IntPtr SourceHandle, IntPtr TargetProcessHandle, out IntPtr TargetHandle, uint DesiredAccess, uint HandleAttr, uint Options);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -98,6 +101,7 @@ namespace POSTDump
             NTC(handle);
         }
 
+        /*
         public static bool GetProcessHandle(int pid, out IntPtr procHandle, uint permissions)
         {
             procHandle = IntPtr.Zero;
@@ -109,6 +113,26 @@ namespace POSTDump
             };
 
             NTOP(ref procHandle, permissions, ref oa, ref ci);
+            if (procHandle == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        */
+
+        public static bool GetProcessHandle(int pid, out IntPtr procHandle, uint permissions)
+        {
+            procHandle = IntPtr.Zero;
+            NtGetNextProcess NTGNP = (NtGetNextProcess)Marshal.GetDelegateForFunctionPointer(POSTDump.ISyscall.GetExportAddress("NtGetNextProcess"), typeof(NtGetNextProcess));
+
+            while (!NTGNP(procHandle, permissions, 0, 0, out procHandle))
+            {
+                if (pid == GetProcessId(procHandle))
+                    break;
+            }
+
             if (procHandle == IntPtr.Zero)
             {
                 return false;
@@ -309,7 +333,8 @@ namespace POSTDump
             Data.NTSTATUS queryResult;
 
             NtQuerySystemInformation NTQSI = (NtQuerySystemInformation)Marshal.GetDelegateForFunctionPointer(Postdump.isyscall.ntquerysys, typeof(NtQuerySystemInformation));
-            while ( (queryResult = NTQSI(systeminfoclass, handleTableInformation, nHandleInfoSize, out nLength)) == Data.NTSTATUS.InfoLengthMismatch){
+            while ((queryResult = NTQSI(systeminfoclass, handleTableInformation, nHandleInfoSize, out nLength)) == Data.NTSTATUS.InfoLengthMismatch)
+            {
                 nHandleInfoSize = nLength;
                 POSTMiniDump.Utils.intFree(handleTableInformation);
                 handleTableInformation = POSTMiniDump.Utils.intAlloc((uint)(nLength *= 2));
@@ -364,7 +389,7 @@ namespace POSTDump
             foreach (Process p in processCollection)
             {
                 if (p.Id != 0 && p.Id != 4 && p.Id != pid)
-                { 
+                {
                     ci.UniqueProcess = (IntPtr)p.Id;
 
                     NTOP(ref hProcess, (uint)0x0040, ref oa, ref ci); //PROCESS_DUP_HANDLE
@@ -377,7 +402,8 @@ namespace POSTDump
                     //Parse each handle of this process
                     foreach (var item in lstHandles)
                     {
-                        if (item.ProcessID == p.Id){
+                        if (item.ProcessID == p.Id)
+                        {
                             Data.NTSTATUS rez = NTDO(hProcess, (IntPtr)item.Handle, (IntPtr)(-1), out hDup, 0, 0, 0x00000002); //DUPLICATE_SAME_ACCESS
                             if (rez != Data.NTSTATUS.Success)
                                 continue;
@@ -403,7 +429,7 @@ namespace POSTDump
                                 NTC(hDup);
                             }
                         }
-                    }  
+                    }
                 }
                 //Close handle to the process
                 NTC(hProcess);
@@ -424,5 +450,11 @@ namespace POSTDump
             public int Object_Pointer;
             public uint GrantedAccess;
         }
+    }
+    internal static class NativeMethods
+    {
+        [DllImport("kernel32.dll", SetLastError = true, CallingConvention = CallingConvention.Winapi)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool IsWow64Process([In] IntPtr process, [Out] out bool wow64Process);
     }
 }
