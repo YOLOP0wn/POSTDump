@@ -69,7 +69,9 @@ namespace Minidump.Streams
             WIN_10_1709 = 16299,
             WIN_10_1803 = 17134,
             WIN_10_1809 = 17763,
-            WIN_10_1903 = 18362
+            WIN_10_1903 = 18362,
+            WIN_11_2022 = 20348,
+            WIN_11_24H2 = 26100
         }
 
         [Flags]
@@ -81,7 +83,8 @@ namespace Minidump.Streams
             WIN_7 = 7000,
             WIN_8 = 8000,
             WIN_BLUE = 9400,
-            WIN_10 = 9800
+            WIN_10 = 9800,
+            WIN_11 = 22000
         }
 
         [Flags]

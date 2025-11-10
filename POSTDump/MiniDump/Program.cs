@@ -30,7 +30,7 @@ namespace Minidump
             FileStream Filestream;
             string result = "";
             byte[] buffer = new byte[size];
-            if (file.Equals(String.Empty)) { 
+            if (string.IsNullOrEmpty(file)) {
                 unsafe
                 {
                     byte* memBytePtr = (byte*)baseaddr.ToPointer();
@@ -81,6 +81,7 @@ namespace Minidump
                 //Console.WriteLine(Helpers.ByteArrayToString(minidump.lsakeys.iv));
                 //Console.WriteLine(Helpers.ByteArrayToString(minidump.lsakeys.des_key));
                 //Console.WriteLine(Helpers.ByteArrayToString(minidump.lsakeys.aes_key));
+
 
                 // parse sessions
                 minidump.logonlist = LogonSessions.FindSessions(minidump, msv.get_template(minidump.sysinfo));

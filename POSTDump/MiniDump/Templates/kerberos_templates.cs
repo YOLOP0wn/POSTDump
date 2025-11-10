@@ -81,13 +81,29 @@ namespace Minidump.Templates
                     template.LogonSessionTypeSize = Marshal.SizeOf(typeof(KIWI_KERBEROS_LOGON_SESSION_10));
                     template.PrimaryCredentialType = typeof(KIWI_KERBEROS_10_PRIMARY_CREDENTIAL);
                 }
-                else if (sysinfo.BuildNumber >= (int)SystemInfo.WindowsBuild.WIN_10_1607)
+                else if ((int)SystemInfo.WindowsBuild.WIN_10_1607 <= sysinfo.BuildNumber && sysinfo.BuildNumber < (int)SystemInfo.WindowsBuild.WIN_11_2022)
                 {
                     template.signature = new byte[] { 0x48, 0x8b, 0x18, 0x48, 0x8d, 0x0d };
                     template.first_entry_offset = 6;
                     template.LogonSessionType = typeof(KIWI_KERBEROS_LOGON_SESSION_10_1607);
                     template.LogonSessionTypeSize = Marshal.SizeOf(typeof(KIWI_KERBEROS_LOGON_SESSION_10_1607));
                     template.PrimaryCredentialType = typeof(KIWI_KERBEROS_10_PRIMARY_CREDENTIAL_1607);
+                }
+                else if ((int)SystemInfo.WindowsBuild.WIN_11_2022 <= sysinfo.BuildNumber && sysinfo.BuildNumber < (int)SystemInfo.WindowsBuild.WIN_11_24H2)
+                {
+                    template.signature = new byte[] { 0x48, 0x8b, 0x18, 0x48, 0x8d, 0x0d };
+                    template.first_entry_offset = 6;
+                    template.LogonSessionType = typeof(KIWI_KERBEROS_LOGON_SESSION_10_1607);
+                    template.LogonSessionTypeSize = Marshal.SizeOf(typeof(KIWI_KERBEROS_LOGON_SESSION_10_1607));
+                    template.PrimaryCredentialType = typeof(KIWI_KERBEROS_INTERNAL_TICKET_11);
+                }
+                else if (sysinfo.BuildNumber >= (int)SystemInfo.WindowsBuild.WIN_11_24H2)
+                {
+                    template.signature = new byte[] { 0x48, 0x8b, 0x18, 0x48, 0x8d, 0x0d };
+                    template.first_entry_offset = 6;
+                    template.LogonSessionType = typeof(KIWI_KERBEROS_LOGON_SESSION_24H2);
+                    template.LogonSessionTypeSize = Marshal.SizeOf(typeof(KIWI_KERBEROS_LOGON_SESSION_24H2));
+                    template.PrimaryCredentialType = typeof(KIWI_KERBEROS_INTERNAL_TICKET_11);
                 }
                 else
                 {
@@ -193,6 +209,73 @@ namespace Minidump.Templates
         }
 
         [StructLayout(LayoutKind.Sequential)]
+        public struct KIWI_KERBEROS_BUFFER
+        {
+            public uint Length;
+            private uint _padding; 
+            public IntPtr Value;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KIWI_KERBEROS_INTERNAL_TICKET_11
+        {
+            public IntPtr Flink;  // PKIWI_KERBEROS_INTERNAL_TICKET_11
+            public IntPtr Blink;  // PKIWI_KERBEROS_INTERNAL_TICKET_11
+
+            public IntPtr unk0;
+            public IntPtr unk1;
+
+            public IntPtr ServiceName;  // PKERB_EXTERNAL_NAME
+            public IntPtr TargetName;   // PKERB_EXTERNAL_NAME
+
+            public UNICODE_STRING DomainName;
+            public UNICODE_STRING TargetDomainName;
+            public UNICODE_STRING Description;
+            public UNICODE_STRING AltTargetDomainName;
+            public UNICODE_STRING KDCServer;
+            public UNICODE_STRING unk10586_d;
+
+            public IntPtr ClientName;  // PKERB_EXTERNAL_NAME
+            public IntPtr name0;
+
+            public uint TicketFlags;  // Big-endian in Python, but stored as uint here
+            public uint unk2;
+
+            public IntPtr unk14393_0;
+
+            public uint unk2x;
+            public uint KeyType;
+
+            public KIWI_KERBEROS_BUFFER Key;
+
+            public IntPtr unk14393_1;
+            public IntPtr unk3;
+            public IntPtr unk4;
+            public IntPtr unk5;
+
+            public FILETIME StartTime;
+            public FILETIME EndTime;
+            public FILETIME RenewUntil;
+
+            public uint unk6;
+            public uint unk7;
+
+            public IntPtr domain;  // PCWSTR
+
+            public uint unk8;
+            private uint _padding1;  // align()
+
+            public IntPtr strangeNames;
+
+            public uint unk9;
+            public uint TicketEncType;
+            public uint TicketKvno;
+            private uint _padding2;  // align()
+
+            public KIWI_KERBEROS_BUFFER Ticket;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct KIWI_KERBEROS_LOGON_SESSION_10
         {
             private readonly uint UsageCount;
@@ -288,6 +371,48 @@ namespace Minidump.Templates
             public IntPtr unk23;
             public IntPtr unk24;
             public IntPtr unk25;
+            public IntPtr pKeyList;
+            public IntPtr unk26;
+            public LIST_ENTRY Tickets_1;
+            public FILETIME unk27;
+            public LIST_ENTRY Tickets_2;
+            public FILETIME unk28;
+            public LIST_ENTRY Tickets_3;
+            public FILETIME unk29;
+            public IntPtr SmartcardInfos;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KIWI_KERBEROS_LOGON_SESSION_24H2
+        {
+            public uint UsageCount;
+            private uint _padding1;
+            public LIST_ENTRY unk0;
+            public uint unk1;
+            private uint _padding2;
+            public FILETIME unk2;
+            public IntPtr unk4;
+            public IntPtr unk5;
+            public IntPtr unk6;
+            public LUID LocallyUniqueIdentifier;
+            public FILETIME unk7;
+            public IntPtr unk8;
+            public uint unk8b;
+            private uint _padding3;
+            public FILETIME unk9;
+            public IntPtr unk11;
+            public IntPtr unk12;
+            public KIWI_KERBEROS_10_PRIMARY_CREDENTIAL_1607 credentials;
+            public uint unk14;
+            public uint unk15;
+            public uint unk16;
+            public uint unk17;
+            public IntPtr unk18;
+            public IntPtr unk19;
+            public IntPtr unk20;
+            public IntPtr unk21;
+            public IntPtr unk22;
+            public IntPtr unk23;
             public IntPtr pKeyList;
             public IntPtr unk26;
             public LIST_ENTRY Tickets_1;

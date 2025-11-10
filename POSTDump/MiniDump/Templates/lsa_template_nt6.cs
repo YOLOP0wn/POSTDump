@@ -132,22 +132,59 @@ namespace Minidump.Templates
                         //win blue
                     }
                 }
-                else if (sysinfo.BuildNumber < (int)SystemInfo.WindowsBuild.WIN_10_1809)
+                else if (sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_10)
+                {
+                    if (sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_BLUE)
+                    {
+                        if (sysinfo.msv_dll_timestamp < 0x60000000)
+                        {
+                            template.key_pattern = new LSA_x64_3().key_pattern;
+                            template.key_handle_struct = new LSA_x64_3().key_handle_struct;
+                            template.key_struct = new LSA_x64_3().key_struct;
+                        }
+                        else
+                        {
+                            template.key_pattern = new LSA_x64_7().key_pattern;
+                            template.key_handle_struct = new LSA_x64_7().key_handle_struct;
+                            template.key_struct = new LSA_x64_7().key_struct;
+                        }
+                    }
+                    else
+                    {
+                        template.key_pattern = new LSA_x64_4().key_pattern;
+                        template.key_handle_struct = new LSA_x64_4().key_handle_struct;
+                        template.key_struct = new LSA_x64_4().key_struct;
+                    }
+                }
+                else if (sysinfo.BuildNumber <= (int)SystemInfo.WindowsBuild.WIN_10_1809)
                 {
                     //template = templates["nt6"]["x64"]["5"];
                     template.key_pattern = new LSA_x64_5().key_pattern;
                     template.key_handle_struct = new LSA_x64_5().key_handle_struct;
                     template.key_struct = new LSA_x64_5().key_struct;
-                    //5
+                    
                 }
-                else
+                else if ((int)SystemInfo.WindowsBuild.WIN_10_1809 < sysinfo.BuildNumber && sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_11)
                 {
                     //template = templates["nt6"]["x64"]["6"];
                     template.key_pattern = new LSA_x64_6().key_pattern;
                     template.key_handle_struct = new LSA_x64_6().key_handle_struct;
                     template.key_struct = new LSA_x64_6().key_struct;
-                    //1809
-                    //6
+                    
+                }
+                else if ((int)SystemInfo.WindowsMinBuild.WIN_11 <= sysinfo.BuildNumber && sysinfo.BuildNumber < (int)SystemInfo.WindowsBuild.WIN_11_24H2)
+                {
+                    //template = templates["nt6"]["x64"]["5"];
+                    template.key_pattern = new LSA_x64_8().key_pattern;
+                    template.key_handle_struct = new LSA_x64_8().key_handle_struct;
+                    template.key_struct = new LSA_x64_8().key_struct;
+                }
+                else
+                {
+                    //template = templates["nt6"]["x64"]["6"];
+                    template.key_pattern = new LSA_x64_9().key_pattern;
+                    template.key_handle_struct = new LSA_x64_9().key_handle_struct;
+                    template.key_struct = new LSA_x64_9().key_struct;
                 }
             }
             else
@@ -362,6 +399,64 @@ namespace Minidump.Templates
             key_handle_struct = new KIWI_BCRYPT_HANDLE_KEY();
         }
     }
+
+    public class LSA_x64_7
+    {
+        public KIWI_BCRYPT_HANDLE_KEY key_handle_struct;
+        public LSADecyptorKeyPattern key_pattern;
+        public KIWI_BCRYPT_KEY8 key_struct;
+
+        public LSA_x64_7()
+        {
+            key_pattern = new LSADecyptorKeyPattern();
+            key_pattern.signature = new byte[] { 0x83, 0x64, 0x24, 0x30, 0x00, 0x44, 0x8b, 0x4d, 0xd8, 0x48, 0x8b, 0x0d };
+            key_pattern.IV_length = 16;
+            key_pattern.offset_to_IV_ptr = 58;
+            key_pattern.offset_to_DES_key_ptr = -62;
+            key_pattern.offset_to_AES_key_ptr = 23;
+            key_struct = new KIWI_BCRYPT_KEY8();
+            key_handle_struct = new KIWI_BCRYPT_HANDLE_KEY();
+        }
+    }
+
+    public class LSA_x64_8
+    {
+        public KIWI_BCRYPT_HANDLE_KEY key_handle_struct;
+        public LSADecyptorKeyPattern key_pattern;
+        public KIWI_BCRYPT_KEY81 key_struct;
+
+        public LSA_x64_8()
+        {
+            key_pattern = new LSADecyptorKeyPattern();
+            key_pattern.signature = new byte[] { 0x83, 0x64, 0x24, 0x30, 0x00, 0x48, 0x8d, 0x45, 0xe0, 0x44, 0x8b, 0x4d, 0xd8, 0x48, 0x8d, 0x15 };
+            key_pattern.IV_length = 16;
+            key_pattern.offset_to_IV_ptr = 58;
+            key_pattern.offset_to_DES_key_ptr = -89;
+            key_pattern.offset_to_AES_key_ptr = 16;
+            key_struct = new KIWI_BCRYPT_KEY81();
+            key_handle_struct = new KIWI_BCRYPT_HANDLE_KEY();
+        }
+    }
+
+    public class LSA_x64_9
+    {
+        public KIWI_BCRYPT_HANDLE_KEY key_handle_struct;
+        public LSADecyptorKeyPattern key_pattern;
+        public KIWI_BCRYPT_KEY81 key_struct;
+
+        public LSA_x64_9()
+        {
+            key_pattern = new LSADecyptorKeyPattern();
+            key_pattern.signature = new byte[] { 0x83, 0x64, 0x24, 0x30, 0x00, 0x48, 0x8d, 0x45, 0xe0, 0x44, 0x8b, 0x4d, 0xd8, 0x48, 0x8d, 0x15 };
+            key_pattern.IV_length = 16;
+            key_pattern.offset_to_IV_ptr = 71;
+            key_pattern.offset_to_DES_key_ptr = -89;
+            key_pattern.offset_to_AES_key_ptr = 16;
+            key_struct = new KIWI_BCRYPT_KEY81();
+            key_handle_struct = new KIWI_BCRYPT_HANDLE_KEY();
+        }
+    }
+
 
     public class LSA_x86_1
     {

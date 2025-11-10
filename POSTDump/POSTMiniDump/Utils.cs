@@ -214,13 +214,13 @@ namespace POSTMiniDump
 
             if (status == Data.NTSTATUS.ObjectPathNotFound || status == Data.NTSTATUS.ObjectNameInvalid)
             {
-                //MessageBox.Show($"The path {full_dump_path} is invalid.");
+                Console.WriteLine($"The path {full_dump_path} is invalid.");
                 return false;
             }
 
             if (status != Data.NTSTATUS.Success)
             {
-                //MessageBox.Show($"Could not create file {full_dump_path}, error: {status.ToString()}");
+                Console.WriteLine($"Could not create file {full_dump_path}, error: {status.ToString()}");
                 return false;
             }
 

