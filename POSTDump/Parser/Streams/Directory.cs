@@ -55,7 +55,7 @@ namespace Minidump.Streams
             LastReservedStream = 0xffff,
         }
 
-        public static List<MINIDUMP_DIRECTORY> ParseDirectory(Program.MiniDump minidump)
+        public static List<MINIDUMP_DIRECTORY> ParseDirectory(Parser.MiniDump minidump)
         {
             List<MINIDUMP_DIRECTORY> directories = new List<Directory.MINIDUMP_DIRECTORY>();
 

@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Microsoft.Win32.SafeHandles;
+using POSTDump;
+using System;
 using System.Runtime.InteropServices;
-using Microsoft.Win32.SafeHandles;
+using static POSTMiniDump.Data;
 
 namespace POSTMiniDump
 {
@@ -34,7 +36,7 @@ namespace POSTMiniDump
         public delegate Data.NTSTATUS NtCreateFile(out IntPtr FileHadle, Data.FileAccess DesiredAcces, ref Data.OBJECT_ATTRIBUTES ObjectAttributes, ref Data.IO_STATUS_BLOCK IoStatusBlock, ref long AllocationSize, System.IO.FileAttributes FileAttributes, System.IO.FileShare ShareAccess, uint CreateDisposition, uint CreateOptions, IntPtr EaBuffer, uint EaLength);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
-        delegate Data.NTSTATUS NtWriteFile(IntPtr handle, IntPtr Event, IntPtr ApcRoutine, IntPtr ApcContext, out Data.IO_STATUS_BLOCK IoStatusBlock, IntPtr Buffer, long Length, uint ByteOffset, uint key);
+        public delegate Data.NTSTATUS NtWriteFile(IntPtr handle, IntPtr Event, IntPtr ApcRoutine, IntPtr ApcContext, out Data.IO_STATUS_BLOCK IoStatusBlock, IntPtr Buffer, long Length, uint ByteOffset, uint key);
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
         delegate Data.NTSTATUS NtFreeVirtualMemory(IntPtr prochandle, ref IntPtr baseaddr, ref ulong RegionSize, uint freetype);
@@ -189,7 +191,7 @@ namespace POSTMiniDump
 
             return full_dump_path_uni;
         }
-
+        /*
         public static bool WriteFile(string DumpPath, IntPtr fileData, long fileLength, out IntPtr hFile)
         {
 
@@ -232,6 +234,70 @@ namespace POSTMiniDump
                 Console.WriteLine($"Could not write the dump {full_dump_path}, error: {status2.ToString()}");
                 return false;
             }
+
+            return true;
+        }
+        */
+        public static IntPtr CreateFile(string DumpPath, long fileLength, out IO_STATUS_BLOCK IoStatusBlock)
+        {
+            IntPtr hFile = IntPtr.Zero;
+            NtCreateFile NTCF = (NtCreateFile)Marshal.GetDelegateForFunctionPointer(POSTDump.Postdump.isyscall.GetSyscallPtr("NtCreateFile"), typeof(NtCreateFile));
+            Data.UNICODE_STRING full_dump_path = GetDumpFullPath(DumpPath);
+
+            IoStatusBlock = new Data.IO_STATUS_BLOCK();
+            IntPtr objName = Marshal.AllocHGlobal(Marshal.SizeOf(full_dump_path));
+            Marshal.StructureToPtr(full_dump_path, objName, true);
+
+            Data.OBJECT_ATTRIBUTES objAttr = new Data.OBJECT_ATTRIBUTES()
+            {
+                Length = Marshal.SizeOf(typeof(Data.OBJECT_ATTRIBUTES)),
+                RootDirectory = IntPtr.Zero,
+                ObjectName = objName,
+                Attributes = 0x00000040 | 0x00000002,
+                SecurityDescriptor = IntPtr.Zero,
+                SecurityQualityOfService = IntPtr.Zero
+            };
+
+            Data.NTSTATUS status = NTCF(out hFile, Data.FileAccess.FILE_GENERIC_WRITE, ref objAttr, ref IoStatusBlock, ref fileLength, System.IO.FileAttributes.Normal, System.IO.FileShare.None, 0x00000005, 0x00000040 | 0x00000020, IntPtr.Zero, 0);
+
+            if (status == Data.NTSTATUS.ObjectPathNotFound || status == Data.NTSTATUS.ObjectNameInvalid)
+            {
+                Console.WriteLine($"The path {full_dump_path} is invalid.");
+                return IntPtr.Zero;
+            }
+
+            if (status != Data.NTSTATUS.Success)
+            {
+                Console.WriteLine($"Could not create file {full_dump_path}, error: {status.ToString()}");
+                return IntPtr.Zero;
+            }
+
+
+            return hFile;
+        }
+
+
+        public static bool WriteFile(string DumpPath, IntPtr fileData, long fileLength)
+        {
+            IntPtr hFile = CreateFile(DumpPath, fileLength, out IO_STATUS_BLOCK IoStatusBlock);
+            if (hFile == IntPtr.Zero)
+            {
+                Console.WriteLine("[-] CreateFile failed!");
+                return false;
+            }
+
+            //NtWriteFile NTWF = (NtWriteFile)Marshal.GetDelegateForFunctionPointer(POSTDump.ISyscall.GetExportAddress("NtWriteFile"), typeof(NtWriteFile));
+            NtWriteFile NTWF = (NtWriteFile)Marshal.GetDelegateForFunctionPointer(POSTDump.Postdump.isyscall.GetSyscallPtr("NtWriteFile"), typeof(NtWriteFile));
+
+            Data.NTSTATUS status = NTWF(hFile, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, out IoStatusBlock, fileData, fileLength, 0, 0);
+            if (status != Data.NTSTATUS.Success)
+            {
+                Console.WriteLine($"Could not write {DumpPath}, error: {status.ToString()}");
+                return false;
+            }
+
+            Handle.NtClose NTC = (Handle.NtClose)Marshal.GetDelegateForFunctionPointer(POSTDump.Postdump.isyscall.ntcloseptr, typeof(Handle.NtClose));
+            NTC(hFile);
 
             return true;
         }

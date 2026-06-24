@@ -28,28 +28,41 @@ namespace Minidump.Templates
 
             if (sysinfo.ProcessorArchitecture == SystemInfo.PROCESSOR_ARCHITECTURE.AMD64)
             {
-                if ((int)SystemInfo.WindowsMinBuild.WIN_XP <= sysinfo.BuildNumber &&
-                    sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_2K3)
+                if ((int)SystemInfo.WindowsMinBuild.WIN_XP <= sysinfo.BuildNumber &&  sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_2K3)
                 {
                     template.signature = new byte[] { 0x48, 0x3b, 0xda, 0x74 };
                     template.first_entry_offset = -4;
                     template.primary_offset = 36;
                     template.list_entry = new KIWI_WDIGEST_LIST_ENTRY();
                 }
-                else if ((int)SystemInfo.WindowsMinBuild.WIN_2K3 <= sysinfo.BuildNumber &&
-                         sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_VISTA)
+                else if ((int)SystemInfo.WindowsMinBuild.WIN_2K3 <= sysinfo.BuildNumber &&  sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_VISTA)
                 {
                     template.signature = new byte[] { 0x48, 0x3b, 0xda, 0x74 };
                     template.first_entry_offset = -4;
                     template.primary_offset = 48;
                     template.list_entry = new KIWI_WDIGEST_LIST_ENTRY();
                 }
-                else if (sysinfo.BuildNumber >= (int)SystemInfo.WindowsMinBuild.WIN_VISTA)
+                else if ((int)SystemInfo.WindowsMinBuild.WIN_VISTA <= sysinfo.BuildNumber && sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_11)
                 {
                     template.signature = new byte[] { 0x48, 0x3b, 0xd9, 0x74 };
                     template.first_entry_offset = -4;
                     template.primary_offset = 48;
                     template.list_entry = new KIWI_WDIGEST_LIST_ENTRY();
+                }
+                else if ((int)SystemInfo.WindowsMinBuild.WIN_11 <= sysinfo.BuildNumber && sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_11)
+                {
+                    template.signature = new byte[] { 0x48, 0x3b, 0xd8, 0x74 };
+                    template.first_entry_offset = -4;
+                    template.primary_offset = 48;
+                    template.list_entry = new KIWI_WDIGEST_LIST_ENTRY();
+                }
+                else if (sysinfo.BuildNumber >= (int)SystemInfo.WindowsMinBuild.WIN_11)
+                {
+                    template.signature = new byte[] { 0x48, 0x3b, 0xc6, 0x74, 0x11, 0x8b, 0x4b, 0x20, 0x39, 0x48 };
+                    template.first_entry_offset = -4;
+                    template.primary_offset = 48;
+                    template.list_entry = new KIWI_WDIGEST_LIST_ENTRY();
+                    
                 }
                 else
                 {

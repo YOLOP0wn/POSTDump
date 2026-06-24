@@ -4,11 +4,10 @@ using Minidump.Templates;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.InteropServices.ComTypes;
 
 namespace Minidump
 {
-    public class Program
+    public class Parser
     {
         public struct MiniDump
         {
@@ -56,31 +55,47 @@ namespace Minidump
             MiniDump minidump = new MiniDump();
             using (data)
             {
-                // parse header && streams
-                minidump.fileBinaryReader = data;
-                minidump.header = Header.ParseHeader(minidump);
-                List<Streams.Directory.MINIDUMP_DIRECTORY> directories = Streams.Directory.ParseDirectory(minidump);
-                Parse.parseMM(ref minidump, directories);
-                //Helpers.PrintProperties(minidump.header);
-                //Helpers.PrintProperties(minidump.sysinfo);
-                //Helpers.PrintProperties(minidump.modules);
-                //Helpers.PrintProperties(minidump.MinidumpMemory64List);
-
-                minidump.sysinfo.msv_dll_timestamp = 0;
-                foreach (ModuleList.MinidumpModule mod in minidump.modules)
+                try
                 {
-                    if (mod.name.Contains("l" + "sa"+ "srv."+ "dll"))
+                    // parse header && streams
+                    minidump.fileBinaryReader = data;
+                    minidump.header = Header.ParseHeader(minidump);
+                    List<Streams.Directory.MINIDUMP_DIRECTORY> directories = Streams.Directory.ParseDirectory(minidump);
+                    Parse.parseMM(ref minidump, directories);
+                    //Helpers.PrintProperties(minidump.header);
+                    //Helpers.PrintProperties(minidump.sysinfo);
+                    //Helpers.PrintProperties(minidump.modules);
+                    //Helpers.PrintProperties(minidump.MinidumpMemory64List);
+
+                    minidump.sysinfo.msv_dll_timestamp = 0;
+                    foreach (ModuleList.MinidumpModule mod in minidump.modules)
                     {
-                        minidump.sysinfo.msv_dll_timestamp = (int)mod.timestamp;
-                        break;
+                        if (mod.name.Contains("l" + "sa" + "srv." + "dll"))
+                        {
+                            minidump.sysinfo.msv_dll_timestamp = (int)mod.timestamp;
+                            break;
+                        }
                     }
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Header parse failed: {e.Message}");
                 }
 
-                // parse lsa
-                minidump.lsakeys = LsaDecryptor.choose(minidump, lsaTemplate.get_template(minidump.sysinfo));
-                //Console.WriteLine(Helpers.ByteArrayToString(minidump.lsakeys.iv));
-                //Console.WriteLine(Helpers.ByteArrayToString(minidump.lsakeys.des_key));
-                //Console.WriteLine(Helpers.ByteArrayToString(minidump.lsakeys.aes_key));
+
+                try
+                {
+                    // parse lsa
+                    minidump.lsakeys = LsaDecryptor.choose(minidump, lsaTemplate.get_template(minidump.sysinfo));
+                    //Console.WriteLine(Helpers.ByteArrayToString(minidump.lsakeys.iv));
+                    //Console.WriteLine(Helpers.ByteArrayToString(minidump.lsakeys.des_key));
+                    //Console.WriteLine(Helpers.ByteArrayToString(minidump.lsakeys.aes_key));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"LSA failed: {e.Message}");
+                }
 
 
                 // parse sessions
@@ -142,14 +157,14 @@ namespace Minidump
                     Console.WriteLine($"SSP failed: {e.Message}");
                 }
 
-                //try
-                //{
-                //    LiveSsp_.FindCredentials(minidump, livessp.get_template(minidump.sysinfo));
-                //}
-                //catch (Exception e)
-                //{
-                //    Console.WriteLine($"LiveSSP failed: {e.Message}");
-                //}
+                try
+                {
+                    LiveSsp_.FindCredentials(minidump, livessp.get_template(minidump.sysinfo));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"LiveSSP failed: {e.Message}");
+                }
 
                 try
                 {
@@ -159,7 +174,7 @@ namespace Minidump
                 {
                     Console.WriteLine($"CloudAP failed: {e.Message}");
                 }
-
+                /*
                 try
                 {
                     Dpapi_.FindCredentials(minidump, dpapi.get_template(minidump.sysinfo));
@@ -168,7 +183,7 @@ namespace Minidump
                 {
                     Console.WriteLine($"Dpapi failed: {e.Message}");
                 }
-
+                */
                 foreach (Logon log in minidump.logonlist)
                 {
                     try

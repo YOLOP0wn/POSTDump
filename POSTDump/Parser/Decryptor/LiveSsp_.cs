@@ -13,7 +13,7 @@ namespace Minidump.Decryptor
 {
     internal class LiveSsp_
     {
-        public static int FindCredentials(Program.MiniDump minidump, LiveSspTemplate template)
+        public static int FindCredentials(Parser.MiniDump minidump, LiveSspTemplate template)
         {
             KIWI_LIVESSP_LIST_ENTRY entry;
             string passDecrypted = "";

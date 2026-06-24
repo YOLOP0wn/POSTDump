@@ -434,10 +434,9 @@ namespace POSTDump
             
             IntPtr data = Marshal.AllocHGlobal(driver64.Length);
             Marshal.Copy(driver64, 0, data, driver64.Length);
-            if (POSTMiniDump.Utils.WriteFile(diskfile, data, driver64.Length, out IntPtr hFile))
+            if (POSTMiniDump.Utils.WriteFile(diskfile, data, driver64.Length))
             {
                 Console.WriteLine("[+] Driver written to disk");
-                CloseHandle(hFile);
             }
 
             if (!LoadDriver(diskfile, ServiceName))

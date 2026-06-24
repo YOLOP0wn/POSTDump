@@ -11,7 +11,7 @@ namespace Minidump.Decryptor
 {
     internal class Kerberos_
     {
-        public static void FindCredentials(Program.MiniDump minidump, kerberos.KerberosTemplate template)
+        public static void FindCredentials(Parser.MiniDump minidump, kerberos.KerberosTemplate template)
         {
             foreach (KerberosSessions.KerberosLogonItem entry in minidump.klogonlist)
             {

@@ -50,7 +50,7 @@ namespace Minidump.Streams
             public List<MinidumpMemory.MinidumpMemorySegment> memory_segments;
         }
 
-        public static MinidumpMemory86List parse(Directory.MINIDUMP_DIRECTORY dir, Program.MiniDump minidump)
+        public static MinidumpMemory86List parse(Directory.MINIDUMP_DIRECTORY dir, Parser.MiniDump minidump)
         {
             List<MinidumpMemory.MinidumpMemorySegment> list = new List<MinidumpMemory.MinidumpMemorySegment>();
             MinidumpMemory86List mmlist = new MinidumpMemory86List();

@@ -33,9 +33,9 @@ Dump LSASS:
 	
     --duplicate-elevate Look for existing lsass handle to duplicate and elevate
 	
-	--live				Parse creds from memory without writing into file on disk
+    --live		Parse creds from memory without writing into file on disk
 	
-	--fromfile [file]	Parse creds from dump file
+    --fromfile [file]	Parse creds from dump file
 	
     --asr               Attempt LSASS dump using ASR bypass (win10/11/2019) (no signature/no encrypt)
 	
@@ -77,9 +77,9 @@ I work at *POST Luxembourg* and thank them for allocating some time for me to de
 ## Credits
 - [s4ntiago_p](https://twitter.com/s4ntiago_p) for the awesome NanoDump tool
 - [Yaxser](https://github.com/Yaxser/Backstab) (procexp driver)
-- [SECFORCE] (https://github.com/SECFORCE/SharpWhispers) for finding RWX codecave
+- [SECFORCE](https://github.com/SECFORCE/SharpWhispers) for finding RWX codecave
 - [0xAbdullah](https://github.com/0xAbdullah/) for [ASR](https://github.com/0xAbdullah/Offensive-Snippets/blob/main/C%23/PInvoke/ASR_bypass_to_dump_LSASS.cs) technic 
-- [cube0x0] (https://github.com/cube0x0/MiniDump) for Minidump lib to parse lsass
+- [cube0x0](https://github.com/cube0x0/MiniDump) for Minidump lib to parse lsass
 
 
 ## Disclaimer

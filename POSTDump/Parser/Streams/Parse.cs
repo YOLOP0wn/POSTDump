@@ -4,7 +4,7 @@ namespace Minidump.Streams
 {
     internal class Parse
     {
-        public static int parseMM(ref Program.MiniDump minidump, List<Directory.MINIDUMP_DIRECTORY> directories)
+        public static int parseMM(ref Parser.MiniDump minidump, List<Directory.MINIDUMP_DIRECTORY> directories)
         {
             foreach (Directory.MINIDUMP_DIRECTORY dir in directories)
             {

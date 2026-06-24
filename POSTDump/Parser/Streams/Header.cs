@@ -45,7 +45,7 @@ namespace Minidump.Streams
             MiniDumpValidTypeFlags = 0x001fffff
         }
 
-        public static MinidumpHeader ParseHeader(Program.MiniDump minidump)
+        public static MinidumpHeader ParseHeader(Parser.MiniDump minidump)
         {
             MinidumpHeader Header = new MinidumpHeader();
             Header.Signature = Helpers.ReadString(minidump.fileBinaryReader, 4);

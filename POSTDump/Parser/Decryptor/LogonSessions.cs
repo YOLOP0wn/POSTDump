@@ -158,7 +158,7 @@ namespace Minidump.Decryptor
             "CachedUnlock"
         };
 
-        public static List<Logon> FindSessions(Program.MiniDump minidump, msv.MsvTemplate template, int ptr_entry_offset = 1)
+        public static List<Logon> FindSessions(Parser.MiniDump minidump, msv.MsvTemplate template, int ptr_entry_offset = 1)
         {
             //PrintProperties(template);
 
@@ -171,32 +171,36 @@ namespace Minidump.Decryptor
                 Console.WriteLine("[x] Error: Could not find LogonSessionList signature\n");
                 return logonlist;
             }
-
+                
             ulong logonSessionOffset = get_ptr_with_offset(minidump.fileBinaryReader, (logonSessionListSignOffset + template.LogonSessionListCountOffset), minidump.sysinfo);
             uint logonSessionListCount = ReadInt8(minidump.fileBinaryReader, (long)logonSessionOffset);
 
-            //Console.WriteLine($"logonSessionOffset {(Int32)logonSessionOffset}");
-            //Console.WriteLine($"Parsing {logonSessionListCount} logon sessions");
-
-            long offset = logonSessionListSignOffset + template.first_entry_offset;
+            uint additional_offset = 0;
+            if (template.first_entry_offset_correction != 0)
+            {
+                long offsetpos = logonSessionListSignOffset + template.first_entry_offset_correction;
+                additional_offset = ReadUInt32(minidump.fileBinaryReader, offsetpos);
+            }
+            
             long listMemOffset = ReadInt32(minidump.fileBinaryReader, logonSessionListSignOffset + template.first_entry_offset);
-            long ptr_entry_loc = offset + sizeof(int) + listMemOffset;
+            long ptr_entry_loc = logonSessionListSignOffset + template.first_entry_offset + sizeof(int) + listMemOffset;
+            ptr_entry_loc += additional_offset;
 
             for (var i = 0; i < logonSessionListCount; i++)
             {
                 long listentry;
-                long entry_ptr;
+                long entry_ptr; 
                 long pos;
                 //Console.WriteLine($"Parsing session {i}");
-
+                
                 entry_ptr = ptr_entry_loc + (16 * i);
                 listentry = ReadInt64(minidump.fileBinaryReader, entry_ptr);
                 //offsetlist.Add(listentry);
                 if (entry_ptr == listentry)
                     continue;
 
-                pos = entry_ptr;
-
+                pos = entry_ptr ;
+                
                 int count = 0;
                 do
                 {
@@ -204,7 +208,7 @@ namespace Minidump.Decryptor
                     //Console.WriteLine($"listentry {listentry}");
 
                     count++;
-                    if (count >= 255)
+                    if (count >= 255)  
                         return null;
 
                     if (listentry == 0)
@@ -270,6 +274,7 @@ namespace Minidump.Decryptor
             return logonlist;
         }
 
+        
         [StructLayout(LayoutKind.Sequential)]
         public struct KIWI_BASIC_SECURITY_LOGON_SESSION_DATA
         {
@@ -283,6 +288,32 @@ namespace Minidump.Decryptor
             public long pCredentialManager;
             public FILETIME LogonTime;
             public string LogonServer;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public unsafe struct MSV1_0_PRIMARY_CREDENTIAL_STRANGE_DEC
+        {
+            public ushort unk1;
+            public ushort unk2;
+
+            // 0xCCCCCCCC
+            public fixed byte unk_tag[4];
+
+            // usually 0x50
+            public uint unk_remaining_size;
+
+            // skipped 40 bytes
+            public fixed byte unk_reserved[40];
+
+            public uint LengthOfNtOwfPassword;
+
+            // 16-byte NT hash
+            public fixed byte NtOwfPassword[16];
+
+            public uint LengthOfShaOwfPassword;
+
+            // 20-byte SHA hash
+            public fixed byte ShaOwPassword[20];
         }
     }
 }

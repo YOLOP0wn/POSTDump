@@ -12,7 +12,7 @@ namespace Minidump.Decryptor
 {
     internal class WDigest_
     {
-        public static int FindCredentials(Program.MiniDump minidump, wdigest.WdigestTemplate template)
+        public static int FindCredentials(Parser.MiniDump minidump, wdigest.WdigestTemplate template)
         {
             wdigest.KIWI_WDIGEST_LIST_ENTRY entry;
             long logSessListAddr;

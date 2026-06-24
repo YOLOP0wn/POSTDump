@@ -11,7 +11,7 @@ namespace Minidump.Decryptor
 {
     public class Rdp_
     {
-        public static int FindCredentials(Program.MiniDump minidump, rdp.RdpTemplate template)
+        public static int FindCredentials(Parser.MiniDump minidump, rdp.RdpTemplate template)
         {
             foreach (byte[] signature in template.signature)
             {

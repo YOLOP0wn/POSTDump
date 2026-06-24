@@ -11,7 +11,7 @@ namespace Minidump.Decryptor
 {
     internal class Credman_
     {
-        public static int FindCredentials(Program.MiniDump minidump, credman.CredmanTemplate template)
+        public static int FindCredentials(Parser.MiniDump minidump, credman.CredmanTemplate template)
         {
             foreach (var logon in minidump.logonlist)
             {

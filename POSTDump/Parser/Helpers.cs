@@ -74,19 +74,19 @@ namespace Minidump
         }
 
         //https://github.com/skelsec/pypykatz/blob/bd1054d1aa948133a697a1dfcb57a5c6463be41a/pypykatz/lsadecryptor/package_commons.py#L64
-        public static long find_signature(Program.MiniDump minidump, string module_name, byte[] signature)
+        public static long find_signature(Parser.MiniDump minidump, string module_name, byte[] signature)
         {
             return find_in_module(minidump, module_name, signature);
         }
 
         //https://github.com/skelsec/minidump/blob/96d6b64dba679df14f5f78c64c3a045be8c4f1f1/minidump/minidumpreader.py#L268
-        public static long find_in_module(Program.MiniDump minidump, string module_name, byte[] pattern, bool find_first = false, bool reverse = false)
+        public static long find_in_module(Parser.MiniDump minidump, string module_name, byte[] pattern, bool find_first = false, bool reverse = false)
         {
             return search_module(minidump, module_name, pattern, find_first = find_first, reverse = reverse);
         }
 
         //https://github.com/skelsec/minidump/blob/96d6b64dba679df14f5f78c64c3a045be8c4f1f1/minidump/minidumpreader.py#L323
-        public static long search_module(Program.MiniDump minidump, string module_name, byte[] pattern, bool find_first = false, bool reverse = false, int chunksize = (10 * 1024))
+        public static long search_module(Parser.MiniDump minidump, string module_name, byte[] pattern, bool find_first = false, bool reverse = false, int chunksize = (10 * 1024))
         {
             long pos = minidump.fileBinaryReader.BaseStream.Position;
             ModuleList.MinidumpModule mod = get_module_by_name(module_name, minidump.modules);
@@ -122,7 +122,7 @@ namespace Minidump
             return 0;
         }
 
-        public static long Rva2offset(Program.MiniDump minidump, long virutal_address)
+        public static long Rva2offset(Parser.MiniDump minidump, long virutal_address)
         {
             List<MinidumpMemory.MinidumpMemorySegment> memory_segments = new List<MinidumpMemory.MinidumpMemorySegment>();
             bool is_fulldump;
@@ -246,7 +246,7 @@ namespace Minidump
             return mystruct;
         }
 
-        public static string ExtractSid(Program.MiniDump minidump, long pSid)
+        public static string ExtractSid(Parser.MiniDump minidump, long pSid)
         {
             byte nbAuth;
             int sizeSid;
@@ -275,7 +275,7 @@ namespace Minidump
             return str;
         }
 
-        public static string ExtractUnicodeStringString(Program.MiniDump minidump, UNICODE_STRING str)
+        public static string ExtractUnicodeStringString(Parser.MiniDump minidump, UNICODE_STRING str)
         {
             if (str.MaximumLength == 0) return null;
 
@@ -343,7 +343,7 @@ namespace Minidump
             return res.ToString();
         }
 
-        public static string ExtractANSIStringString(Program.MiniDump minidump, UNICODE_STRING str)
+        public static string ExtractANSIStringString(Parser.MiniDump minidump, UNICODE_STRING str)
         {
             if (str.MaximumLength == 0) return null;
 
@@ -369,23 +369,23 @@ namespace Minidump
             return name;
         }
 
-        public static void PrintProperties(object myObj, string header = "", int offset = 0)
+        public static void  PrintProperties(object myObj, string header = "", int offset = 0, string outputFile = "dump.txt")
         {
             string trail = String.Concat(Enumerable.Repeat(" ", offset));
 
             if (!string.IsNullOrEmpty(header))
-                Console.WriteLine(header);
+               Console.WriteLine(header);
 
             foreach (var prop in myObj.GetType().GetProperties())
             {
                 try
                 {
                     if (!string.IsNullOrEmpty((string)(prop.GetValue(myObj, null))))
-                        Console.WriteLine(trail + prop.Name + ": " + prop.GetValue(myObj, null));
+                       Console.WriteLine(trail + prop.Name + ": " + prop.GetValue(myObj, null));
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(trail + prop.Name + ": " + prop.GetValue(myObj, null));
+                   Console.WriteLine(trail + prop.Name + ": " + prop.GetValue(myObj, null));
                 }
             }
 
@@ -394,11 +394,11 @@ namespace Minidump
                 try
                 {
                     if (!string.IsNullOrEmpty((string)field.GetValue(myObj)))
-                        Console.WriteLine(trail + field.Name + ": " + field.GetValue(myObj));
+                       Console.WriteLine(trail + field.Name + ": " + field.GetValue(myObj));
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(trail + field.Name + ": " + field.GetValue(myObj));
+                   Console.WriteLine(trail + field.Name + ": " + field.GetValue(myObj));
                 }
             }
         }

@@ -74,6 +74,18 @@ namespace POSTMiniDump
             public ulong Reserved1;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SYSTEM_HANDLE_TABLE_ENTRY_INFO_EX
+        {
+            public IntPtr Object;
+            public IntPtr UniqueProcessId;
+            public IntPtr HandleValue;
+            public uint GrantedAccess;
+            public ushort CreatorBackTraceIndex;
+            public ushort ObjectTypeIndex;
+            public uint HandleAttributes;
+            public uint Reserved;
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct OsVersionInfo
@@ -244,18 +256,15 @@ namespace POSTMiniDump
             MaxProcessInfoClass = 0x64
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         public struct PROCESS_BASIC_INFORMATION
         {
-            public IntPtr ExitStatus;
+            public IntPtr Reserved1;
             public IntPtr PebBaseAddress;
-            public IntPtr AffinityMask;
-            public IntPtr BasePriority;
-            public UIntPtr UniqueProcessId;
-            public int InheritedFromUniqueProcessId;
-            public int Size
-            {
-                get { return (int)Marshal.SizeOf(typeof(PROCESS_BASIC_INFORMATION)); }
-            }
+            public IntPtr Reserved2_0;
+            public IntPtr Reserved2_1;
+            public IntPtr UniqueProcessId;
+            public IntPtr InheritedFromUniqueProcessId;
         }
 
         [StructLayout(LayoutKind.Sequential)]

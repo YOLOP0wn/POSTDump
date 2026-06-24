@@ -10,7 +10,7 @@ namespace Minidump.Decryptor
 {
     public class Dpapi_
     {
-        public static int FindCredentials(Program.MiniDump minidump, dpapi.DpapiTemplate template)
+        public static int FindCredentials(Parser.MiniDump minidump, dpapi.DpapiTemplate template)
         {
             foreach (string module in new List<string> { "lsasrv.dll", "dpapisrv.dll" })
             {
@@ -35,7 +35,7 @@ namespace Minidump.Decryptor
                     {
                         byte[] dec_masterkey = BCrypt.DecryptCredentials(dpapiEntry.key, minidump.lsakeys);
                         Dpapi dpapi = new Dpapi();
-                        //dpapi.luid = $"{dpapiEntry.LogonId.HighPart}:{dpapiEntry.LogonId.LowPart}";
+                        dpapi.luid = $"{dpapiEntry.LogonId.HighPart}:{dpapiEntry.LogonId.LowPart}";
                         dpapi.masterkey = BitConverter.ToString(dec_masterkey).Replace("-", "");
                         dpapi.insertTime = $"{ToDateTime(dpapiEntry.insertTime):yyyy-MM-dd HH:mm:ss}";
                         dpapi.key_size = dpapiEntry.keySize.ToString();

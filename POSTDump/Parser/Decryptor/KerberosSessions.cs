@@ -8,7 +8,7 @@ namespace Minidump.Decryptor
 {
     public class KerberosSessions
     {
-        public static List<KerberosLogonItem> FindSessions(Program.MiniDump minidump, kerberos.KerberosTemplate template)
+        public static List<KerberosLogonItem> FindSessions(Parser.MiniDump minidump, kerberos.KerberosTemplate template)
         {
             var klogonlist = new List<KerberosLogonItem>();
 
@@ -29,7 +29,7 @@ namespace Minidump.Decryptor
             return klogonlist;
         }
 
-        private static void WalkAVLTables(Program.MiniDump minidump, long kerbUnloadLogonSessionTableAddr, List<KerberosLogonItem> klogonlist, kerberos.KerberosTemplate template)
+        private static void WalkAVLTables(Parser.MiniDump minidump, long kerbUnloadLogonSessionTableAddr, List<KerberosLogonItem> klogonlist, kerberos.KerberosTemplate template)
         {
             if (kerbUnloadLogonSessionTableAddr == 0)
                 return;

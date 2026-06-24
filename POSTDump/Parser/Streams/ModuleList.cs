@@ -135,7 +135,7 @@ namespace Minidump.Streams
             return mml;
         }
 
-        public static List<MinidumpModule> parse(Directory.MINIDUMP_DIRECTORY dir, Program.MiniDump minidump)
+        public static List<MinidumpModule> parse(Directory.MINIDUMP_DIRECTORY dir, Parser.MiniDump minidump)
         {
             List<MinidumpModule> list = new List<MinidumpModule>();
             minidump.fileBinaryReader.BaseStream.Seek(dir.Offset, 0);

@@ -11,7 +11,7 @@ namespace Minidump.Decryptor
 {
     internal class Ssp_
     {
-        public static int FindCredentials(Program.MiniDump minidump, ssp.SspTemplate template)
+        public static int FindCredentials(Parser.MiniDump minidump, ssp.SspTemplate template)
         {
             ssp.KIWI_SSP_CREDENTIAL_LIST_ENTRY entry;
             string passDecrypted = "";

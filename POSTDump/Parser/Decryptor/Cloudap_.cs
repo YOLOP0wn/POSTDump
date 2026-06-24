@@ -11,7 +11,7 @@ namespace Minidump.Decryptor
 {
     public class Cloudap_
     {
-        public static int FindCredentials(Program.MiniDump minidump, cloudap.CloudapTemplate template)
+        public static int FindCredentials(Parser.MiniDump minidump, cloudap.CloudapTemplate template)
         {
             wdigest.KIWI_WDIGEST_LIST_ENTRY entry;
             long logSessListAddr;

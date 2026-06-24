@@ -71,7 +71,10 @@ namespace Minidump.Streams
             WIN_10_1809 = 17763,
             WIN_10_1903 = 18362,
             WIN_11_2022 = 20348,
-            WIN_11_24H2 = 26100
+            WIN_11_2023 = 22621,
+            WIN_11_23H2 = 22631,
+            WIN_11_24H2 = 26100,
+            WIN_11_25H2 = 26200
         }
 
         [Flags]
@@ -84,7 +87,7 @@ namespace Minidump.Streams
             WIN_8 = 8000,
             WIN_BLUE = 9400,
             WIN_10 = 9800,
-            WIN_11 = 22000
+            WIN_11 = 22000            
         }
 
         [Flags]
@@ -257,7 +260,7 @@ namespace Minidump.Streams
             return OperatingSystem;
         }
 
-        public static MINIDUMP_SYSTEM_INFO parse(Directory.MINIDUMP_DIRECTORY dir, Program.MiniDump minidump)
+        public static MINIDUMP_SYSTEM_INFO parse(Directory.MINIDUMP_DIRECTORY dir, Parser.MiniDump minidump)
         {
             minidump.fileBinaryReader.BaseStream.Seek(dir.Offset, 0);
             byte[] chunk = minidump.fileBinaryReader.ReadBytes((int)dir.Size);

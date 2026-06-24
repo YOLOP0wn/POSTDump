@@ -12,7 +12,7 @@ namespace Minidump.Decryptor
             public byte[] des_key;
         }
 
-        public static LsaKeys choose(Program.MiniDump minidump, object template)
+        public static LsaKeys choose(Parser.MiniDump minidump, object template)
         {
             if (template.GetType() == typeof(lsaTemplate_NT6.LsaTemplate_NT6))
             {

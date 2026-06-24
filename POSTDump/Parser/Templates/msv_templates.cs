@@ -2,6 +2,7 @@ using Minidump.Streams;
 using System;
 using System.Runtime.InteropServices;
 using static Minidump.Helpers;
+using static Minidump.Streams.SystemInfo;
 
 namespace Minidump.Templates
 {
@@ -35,6 +36,7 @@ namespace Minidump.Templates
             public Type list_entry;
             public Type credential_entry;
             public int PasswordOffset;
+            public int first_entry_offset_correction;
         }
 
         public static MsvTemplate get_template(SystemInfo.MINIDUMP_SYSTEM_INFO sysinfo)
@@ -73,7 +75,7 @@ namespace Minidump.Templates
             else if (sysinfo.BuildNumber < (int)SystemInfo.WindowsMinBuild.WIN_BLUE)
             {
                 //template.list_entry = PKIWI_MSV1_0_LIST_62
-                Console.WriteLine(sysinfo.msv_dll_timestamp);
+                //Console.WriteLine(sysinfo.msv_dll_timestamp);
                 if (sysinfo.msv_dll_timestamp > 0x53480000)
                 {
                     template.list_entry = typeof(KIWI_MSV1_0_LIST_63);
@@ -83,10 +85,26 @@ namespace Minidump.Templates
                     template.list_entry = typeof(KIWI_MSV1_0_LIST_62);
                 }
             }
-            else
+            else if (sysinfo.BuildNumber < (int)SystemInfo.WindowsBuild.WIN_11_24H2)
             {
                 template.list_entry = typeof(KIWI_MSV1_0_LIST_63);
             }
+            else if (sysinfo.BuildNumber < (int)WindowsBuild.WIN_11_25H2)
+            { 
+                if ((uint)sysinfo.msv_dll_timestamp >= 0xd133958f)
+                {
+                    template.list_entry = typeof(KIWI_MSV1_0_LIST_65);
+                }
+                else
+                {
+                    template.list_entry = typeof(KIWI_MSV1_0_LIST_64);
+                }
+            }
+            else
+            {
+                template.list_entry = typeof(KIWI_MSV1_0_LIST_65);
+            }
+
             template.ListTypeSize = Marshal.SizeOf(template.list_entry);
             template.LocallyUniqueIdentifierOffset = StructFieldOffset(template.list_entry, "LocallyUniqueIdentifier");
             template.LogonTypeOffset = StructFieldOffset(template.list_entry, "LogonType");
@@ -112,9 +130,13 @@ namespace Minidump.Templates
             {
                 template.credential_entry = typeof(MSV1_0_PRIMARY_CREDENTIAL_10);
             }
-            else
+            else if (sysinfo.BuildNumber < (int)SystemInfo.WindowsBuild.WIN_11_24H2)
             {
                 template.credential_entry = typeof(MSV1_0_PRIMARY_CREDENTIAL_10_1607);
+                template.PasswordOffset = -2;
+            }
+            else {
+                template.credential_entry = typeof(MSV1_0_PRIMARY_CREDENTIAL_11_H24_DEC);
                 template.PasswordOffset = -2;
             }
 
@@ -124,13 +146,14 @@ namespace Minidump.Templates
             template.NtOwfPasswordOffset = StructFieldOffset(template.credential_entry, "NtOwfPassword") + template.PasswordOffset;
             template.ShaOwPasswordOffset = StructFieldOffset(template.credential_entry, "ShaOwPassword") + template.PasswordOffset;
 
-            if (template.credential_entry != typeof(MSV1_0_PRIMARY_CREDENTIAL_10_1607))
+            if (template.credential_entry != typeof(MSV1_0_PRIMARY_CREDENTIAL_10_1607) || template.credential_entry != typeof(MSV1_0_PRIMARY_CREDENTIAL_11_H24_DEC))
             {
                 template.DPAPIProtectedOffset = 0;
             }
             else
             {
                 template.DPAPIProtectedOffset = FieldOffset<MSV1_0_PRIMARY_CREDENTIAL_10_1607>("DPAPIProtected");
+                template.DPAPIProtectedOffset = FieldOffset<MSV1_0_PRIMARY_CREDENTIAL_11_H24_DEC>("DPAPIProtected");
             }
 
             if (sysinfo.ProcessorArchitecture == SystemInfo.PROCESSOR_ARCHITECTURE.AMD64)
@@ -192,12 +215,32 @@ namespace Minidump.Templates
                     template.first_entry_offset = 23;
                     template.LogonSessionListCountOffset = -4;
                 }
-                else
+                else if ((int)SystemInfo.WindowsBuild.WIN_10_1903 <= sysinfo.BuildNumber && sysinfo.BuildNumber < (int)SystemInfo.WindowsBuild.WIN_11_2022)
                 {
-                    //1903
+                    //1803
                     template.signature = new byte[] { 0x33, 0xff, 0x41, 0x89, 0x37, 0x4c, 0x8b, 0xf3, 0x45, 0x85, 0xc0, 0x74 };
                     template.first_entry_offset = 23;
                     template.LogonSessionListCountOffset = -4;
+                }
+
+                else if ((int)SystemInfo.WindowsBuild.WIN_11_2022 <= sysinfo.BuildNumber && sysinfo.BuildNumber < (int)SystemInfo.WindowsBuild.WIN_11_2023)
+                {
+                    template.signature = new byte[] { 0x45, 0x89, 0x34, 0x24, 0x4c, 0x8b, 0xff, 0x8b, 0xf3, 0x45, 0x85, 0xc0, 0x74 };
+                    template.first_entry_offset = 24;   
+                    template.LogonSessionListCountOffset = -4;
+                }
+                else if ((int)SystemInfo.WindowsBuild.WIN_11_2023 <= sysinfo.BuildNumber && sysinfo.BuildNumber < (int)SystemInfo.WindowsBuild.WIN_11_24H2)
+                {
+                    template.signature = new byte[] { 0x45, 0x89, 0x37, 0x4c, 0x8b, 0xf7, 0x8b, 0xf3, 0x45, 0x85, 0xc0, 0x0f };
+                    template.first_entry_offset = 27;
+                    template.LogonSessionListCountOffset = -4;
+                }
+                else
+                {
+                    template.signature = new byte[] { 0x45, 0x89, 0x34, 0x24, 0x8b, 0xfb, 0x45, 0x85, 0xc0, 0x0f };
+                    template.first_entry_offset = 25;
+                    template.LogonSessionListCountOffset = -16;
+                    template.first_entry_offset_correction = 34;
                 }
             }
             else if (sysinfo.ProcessorArchitecture == SystemInfo.PROCESSOR_ARCHITECTURE.INTEL)
@@ -542,6 +585,107 @@ namespace Minidump.Templates
         public IntPtr CredentialManager;
     }
 
+    public struct KIWI_MSV1_0_LIST_64
+    {
+        public IntPtr Flink;
+        public IntPtr Blink;
+        public IntPtr unk0;
+        public uint unk1;
+        public IntPtr unk2;
+        public uint unk3;
+        public uint unk4;
+        public uint unk5;
+        public IntPtr hSemaphore6;
+        public IntPtr unk7;
+        public IntPtr hSemaphore8;
+        public IntPtr unk9;
+        public IntPtr unk10;
+        public uint unk11;
+        public uint unk12;
+        public IntPtr unk13;
+        public LUID LocallyUniqueIdentifier;
+        public LUID SecondaryLocallyUniqueIdentifier;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
+        public byte[] waza;
+        public IntPtr unk;
+        public UNICODE_STRING UserName;
+
+        public UNICODE_STRING Domain;
+        public IntPtr unk14;
+        public IntPtr unk15;
+        public UNICODE_STRING Type;
+        public IntPtr pSid;
+        public uint LogonType;
+        public IntPtr unk16;
+        public uint Session;
+        public LARGE_INTEGER LogonTime;
+        public UNICODE_STRING LogonServer;
+        public IntPtr Credentials;
+        public IntPtr unk17;
+        public IntPtr unk18;
+        public IntPtr unk19;
+        public uint unk20;
+        public uint unk21;
+        public uint unk22;
+        public uint unk23;
+        public uint unk24;
+        public IntPtr unk25;
+        public IntPtr unk26;
+        public IntPtr unk27;
+        public IntPtr CredentialManager;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct KIWI_MSV1_0_LIST_65
+    {
+        public IntPtr Flink;
+        public IntPtr Blink;
+        public IntPtr unk0;
+        public uint unk1;
+        public IntPtr unk2;
+        public uint unk3;
+        public uint unk4;
+        public uint unk5;
+        public IntPtr hSemaphore6;
+        public IntPtr unk6;
+        public IntPtr hSemaphore8;
+        public IntPtr unk7;
+        public IntPtr unk8;
+        public uint unk9;
+        public uint unk10;
+        public IntPtr unk11;
+        public LUID LocallyUniqueIdentifier;
+        public LUID SecondaryLocallyUniqueIdentifier;
+        public fixed byte waza[12];
+        public IntPtr unk12;
+        public IntPtr unk13;
+        public UNICODE_STRING UserName;
+        public UNICODE_STRING Domain;
+        public IntPtr unk14;
+        public IntPtr unk15;
+        public UNICODE_STRING Type;
+        public IntPtr pSid;
+        public uint LogonType;
+        public IntPtr unk16;
+        public uint Session;
+        public ulong LogonTime;
+        public UNICODE_STRING LogonServer;
+        public IntPtr Credentials;
+        public IntPtr unk17;
+        public IntPtr unk18;
+        public IntPtr unk27;
+        public uint unk19;
+        public uint unk20;
+        public uint unk21;
+        public uint unk22;
+        public uint unk23;
+        public IntPtr unk24;
+        public IntPtr unk25;
+        public IntPtr unk26;
+        public IntPtr CredentialManager;
+    }
+
     //KIWI_X_PRIMARY_CREDENTIAL
     [StructLayout(LayoutKind.Sequential)]
     public struct KIWI_GENERIC_PRIMARY_CREDENTIAL
@@ -653,4 +797,40 @@ namespace Minidump.Templates
 
         /* buffer */
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MSV1_0_PRIMARY_CREDENTIAL_11_H24_DEC
+    {
+        private readonly UNICODE_STRING LogonDomainName;
+        private readonly UNICODE_STRING UserName;
+        private readonly IntPtr pNtlmCredIsoInProc;
+        private readonly byte isIso;
+        private readonly byte isNtOwfPassword;
+        private readonly byte isLmOwfPassword;
+        private readonly byte isShaOwPassword;
+        private readonly byte isDPAPIProtected;
+        private readonly byte align0;
+        private readonly byte align1;
+        private readonly byte align2;
+
+        private readonly ushort isoSize;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+        private readonly byte[] DPAPIProtected;
+
+        private readonly uint align3;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+        private readonly byte[] NtOwfPassword;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+        private readonly byte[] LmOwfPassword;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = SHA_DIGEST_LENGTH)]
+        private readonly byte[] ShaOwPassword;
+
+        /* buffer */
+    }
+
+    
 }

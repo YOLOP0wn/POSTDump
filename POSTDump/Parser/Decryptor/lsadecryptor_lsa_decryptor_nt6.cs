@@ -7,7 +7,7 @@ namespace Minidump.Decryptor
 {
     public class LsaDecryptor_NT6
     {
-        public static LsaDecryptor.LsaKeys LsaDecryptor(Program.MiniDump minidump, lsaTemplate_NT6.LsaTemplate_NT6 template)
+        public static LsaDecryptor.LsaKeys LsaDecryptor(Parser.MiniDump minidump, lsaTemplate_NT6.LsaTemplate_NT6 template)
         {
             LsaDecryptor.LsaKeys LsaKeys = new LsaDecryptor.LsaKeys();
 
@@ -16,7 +16,7 @@ namespace Minidump.Decryptor
             return LsaKeys;
         }
 
-        public static void acquire_crypto_material(Program.MiniDump minidump, lsaTemplate_NT6.LsaTemplate_NT6 template, ref LsaDecryptor.LsaKeys LsaKeys)
+        public static void acquire_crypto_material(Parser.MiniDump minidump, lsaTemplate_NT6.LsaTemplate_NT6 template, ref LsaDecryptor.LsaKeys LsaKeys)
         {
             //Console.WriteLine("Acquireing crypto stuff...");
 
@@ -28,7 +28,7 @@ namespace Minidump.Decryptor
             LsaKeys.aes_key = get_aes_key(minidump, sigpos, template);
         }
 
-        public static byte[] get_des_key(Program.MiniDump minidump, long pos, lsaTemplate_NT6.LsaTemplate_NT6 template)
+        public static byte[] get_des_key(Parser.MiniDump minidump, long pos, lsaTemplate_NT6.LsaTemplate_NT6 template)
         {
             ///Console.WriteLine("Acquireing DES key...");
             long offset = (pos + template.key_pattern.offset_to_DES_key_ptr);
@@ -50,7 +50,7 @@ namespace Minidump.Decryptor
             return extracted3DesKey.hardkey.data.Take(24).ToArray();
         }
 
-        public static byte[] get_aes_key(Program.MiniDump minidump, long pos, lsaTemplate_NT6.LsaTemplate_NT6 template)
+        public static byte[] get_aes_key(Parser.MiniDump minidump, long pos, lsaTemplate_NT6.LsaTemplate_NT6 template)
         {
             //Console.WriteLine("Acquireing AES key...");
             long offset = (pos + template.key_pattern.offset_to_AES_key_ptr);
@@ -73,7 +73,7 @@ namespace Minidump.Decryptor
             return extractedAesKey.hardkey.data.Take(16).ToArray();
         }
 
-        public static long find_signature(Program.MiniDump minidump, lsaTemplate_NT6.LsaTemplate_NT6 template)
+        public static long find_signature(Parser.MiniDump minidump, lsaTemplate_NT6.LsaTemplate_NT6 template)
         {
             //Console.WriteLine("Looking for main struct signature in memory...");
             long fl = Helpers.find_in_module(minidump, "lsasrv.dll", template.key_pattern.signature);
@@ -84,7 +84,7 @@ namespace Minidump.Decryptor
             return fl;
         }
 
-        public static byte[] get_IV(Program.MiniDump minidump, long pos, lsaTemplate_NT6.LsaTemplate_NT6 template)
+        public static byte[] get_IV(Parser.MiniDump minidump, long pos, lsaTemplate_NT6.LsaTemplate_NT6 template)
         {
             //Console.WriteLine("Reading IV");
             long offset = (pos + template.key_pattern.offset_to_IV_ptr);

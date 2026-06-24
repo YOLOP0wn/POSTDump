@@ -14,7 +14,7 @@ namespace Minidump.Decryptor
     {
         private static readonly long max_search_size = 170000;
 
-        public static int FindCredentials(Program.MiniDump minidump, tspkg.TspkgTemplate template)
+        public static int FindCredentials(Parser.MiniDump minidump, tspkg.TspkgTemplate template)
         {
             RTL_AVL_TABLE entry;
             long llCurrent;
@@ -40,7 +40,7 @@ namespace Minidump.Decryptor
             return 1;
         }
 
-        private static void WalkAVLTables(Program.MiniDump minidump, tspkg.TspkgTemplate template, long pElement)
+        private static void WalkAVLTables(Parser.MiniDump minidump, tspkg.TspkgTemplate template, long pElement)
         {
             pElement = Rva2offset(minidump, pElement);
             minidump.fileBinaryReader.BaseStream.Seek(pElement, 0);
