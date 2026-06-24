@@ -19,31 +19,26 @@ Dump LSASS:
 
     c:\Temp>PostDump.exe --help
 
-    -o, --output        Output filename [default: Machine_datetime.dmp] (fullpath handled)
-
-    -e, --encrypt       Encrypt dump in-memory
-
-    -s, --signature     Generate invalid Minidump signature
-
-    --snap              Use snapshot technic
-
-    --fork              Use fork technic [default]
-
-    --elevate-handle    Open a handle to LSASS with low privileges and duplicate it to gain higher privileges
-	
-    --duplicate-elevate Look for existing lsass handle to duplicate and elevate
-	
-    --live		Parse creds from memory without writing into file on disk
-	
-    --fromfile [file]	Parse creds from dump file
-	
-    --asr               Attempt LSASS dump using ASR bypass (win10/11/2019) (no signature/no encrypt)
-	
-    --driver            Use Process Explorer driver to open lsass handle (bypass PPL) and dump lsass
-	
-    --kill [processID]  Use Process Explorer driver to kill process and exit
-
-    --help              Display this help screen.
+    "[PPL DISABLED]\n" +
+    "--snap - Use snapshot technic\n" +
+    "--fork - Use fork technic [default]\n" +
+    "--duplicate-elevate - Look for existing lsass handle to duplicate and elevate\n" +
+    "--elevate-handle - Open a handle with low privileges and duplicate it to gain higher privileges (default: true)\n" +
+    "--asr - Attempt dump using ASR bypass (no signature/encrypt available, .dmp file written on disk)\n" +
+    
+	"[PPL ENABLED]\n" +
+    "--duplicate-elevate - Look for existing lsass handle to duplicate and elevate\n" +
+    "--werfaultsecure - Attempt dump using vulnerable werfaultsecure to dump PPL process\n" +
+    "--driver, -d - Use Process Explorer driver to open lsass handle and dump lsass\n" +
+    "--kill, -k [processID] - Use Process Explorer driver to kill process and exit\n" +
+    
+	"[GLOBAL]\n" +
+    "--help, -h - Display help\n" +
+    "--encrypt, -e - Encrypt dump in-memory\n" +
+    "--signature, -s - Generate invalid Minidump signature\n" +
+    "--live - Parse creds from memory without writing into file on disk\n" +
+    "--parse-dump - Parse creds from dump file\n" +
+    "--outfile, -o - Output file where to write dump\n" +
 
 
 ## Evasion
