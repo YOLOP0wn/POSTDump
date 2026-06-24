@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
@@ -15,7 +15,9 @@ namespace POSTMiniDump
         internal static List<Data.PModuleInfo> find_modules(IntPtr Hprocess)
         {
             List<Data.PModuleInfo> moduleslist = new List<Data.PModuleInfo>();
+
             IntPtr ldr_entry_address = get_module_list_address(Hprocess);
+
             if (ldr_entry_address == IntPtr.Zero)
             {
                 return null;
@@ -32,20 +34,22 @@ namespace POSTMiniDump
                 bool success = read_ldr_entry(Hprocess, ldr_entry_address, out ldr_entry, out base_dll_name);
                 if (!success)
                 {
-                    //MessageBox.Show("Could not read ldr entry");
                     return null;
                 }
 
 
                 for (int i = 0; i < important_modules.Length; i++)
                 {
+
                     if (important_modules[i].Equals(base_dll_name.ToString(), StringComparison.OrdinalIgnoreCase))
                     {
-                            
-                        //MessageBox.Show($"Found {important_modules[i]} at "+ ldr_entry_address.ToString("x"));
+
                         Data.PModuleInfo new_module = add_new_module(Hprocess, ldr_entry);
-                        moduleslist.Add(new_module);
-                        dlls_found++;
+                        if (new_module != null)
+                        {
+                            moduleslist.Add(new_module);
+                            dlls_found++;
+                        }
                         break;
                     }
                 }
@@ -61,34 +65,51 @@ namespace POSTMiniDump
                     first_ldr_entry_address = ldr_entry.InMemoryOrderLinks.Flink;
                 }
             }
-            
             return moduleslist;
         }
-        
+
         private static bool read_ldr_entry(IntPtr Hprocess, IntPtr ldr_entry_address, out Data.LDR_DATA_TABLE_ENTRY ldr_entry, out Data.UNICODE_STRING base_dll_name)
         {
-            
+
             uint r = 0;
             NtReadVirtualMemory NTRVM2 = (NtReadVirtualMemory)Marshal.GetDelegateForFunctionPointer(POSTDump.Postdump.isyscall.ntreadptr, typeof(NtReadVirtualMemory));
             Data.NTSTATUS status = NTRVM2(Hprocess, ldr_entry_address, out ldr_entry, (uint)Marshal.SizeOf(typeof(Data.LDR_DATA_TABLE_ENTRY)), ref r);
 
+
             if (status != Data.NTSTATUS.Success)
             {
-                //MessageBox.Show("Could not read module information at: 0x{0:x}", ldr_entry_address.ToString("X"));
                 base_dll_name = new Data.UNICODE_STRING();
                 return false;
             }
+
+            // Defense: detect invalid/sentinel LDR entries (garbage at end of linked list)
+            // DllBase == 0 means this is not a valid module entry; return empty name to let
+            // caller skip it instead of treating as fatal error
+            if (ldr_entry.DllBase == IntPtr.Zero)
+            {
+                base_dll_name = new Data.UNICODE_STRING();
+                return true;
+            }
+
+            // Defense: if BaseDllName.Buffer is NULL or Length is 0, this is also garbage
+            if (ldr_entry.BaseDllName.Buffer == IntPtr.Zero || ldr_entry.BaseDllName.Length == 0)
+            {
+                base_dll_name = new Data.UNICODE_STRING();
+                return true;
+            }
+
 
             base_dll_name = new Data.UNICODE_STRING();
             base_dll_name.Buffer = Utils.intAlloc(Data.MAX_PATH);
             MiniDump.NtReadVirtualMemory NTRVM = (MiniDump.NtReadVirtualMemory)Marshal.GetDelegateForFunctionPointer(POSTDump.Postdump.isyscall.ntreadptr, typeof(MiniDump.NtReadVirtualMemory));
             Data.NTSTATUS status2 = NTRVM(Hprocess, ldr_entry.BaseDllName.Buffer, base_dll_name.Buffer, (uint)ldr_entry.BaseDllName.Length, ref r);
+
+
             if (status2 != Data.NTSTATUS.Success)
             {
-                //MessageBox.Show("Could not read module information at: 0x{0:x}", ldr_entry_address.ToString("X"));
                 return false;
             }
- 
+
             return true;
         }
 
@@ -112,12 +133,11 @@ namespace POSTMiniDump
 
             if (status != Data.NTSTATUS.Success)
             {
-                //MessageBox.Show("Could not get LDR address");
                 return IntPtr.Zero;
             }
 
 
-            
+
             module_list_pointer = Utils.RVA(ldr_address, Data.MODULE_LIST_POINTER_OFFSET);
             IntPtr buf2 = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(IntPtr)));
             status = NTRVM(Hprocess, module_list_pointer, buf2, (uint)Marshal.SizeOf(typeof(IntPtr)), ref byteread);
@@ -126,11 +146,10 @@ namespace POSTMiniDump
 
             if (status != Data.NTSTATUS.Success)
             {
-                //MessageBox.Show(status.ToString());
                 return IntPtr.Zero;
             }
 
-            return ldr_entry_address;      
+            return ldr_entry_address;
         }
 
         private static IntPtr get_peb_address(IntPtr Hprocess)
@@ -167,10 +186,9 @@ namespace POSTMiniDump
             Data.NTSTATUS status = NTRVM(Hprocess, ldr_entry.FullDllName.Buffer, new_module.dll_name.Buffer, (uint)name_size, ref l);
             if (status != Data.NTSTATUS.Success)
             {
-                //MessageBox.Show("Failed to read dllname buffer with error "+ status.ToString() );
                 return null;
             }
-            
+
             return new_module;
         }
     }

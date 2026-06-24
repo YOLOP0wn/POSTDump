@@ -1,0 +1,31 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+
+# NuGet
+packages/
+
+# IDE files
+*.user
+*.suo
+*.vs/
+.vs/
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Binary files
+*.exe
+*.dll
+*.sys
+*.pdb
+*.dmp
+
+# Log files
+win10.txt
+win11.txt

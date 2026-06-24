@@ -218,9 +218,9 @@ namespace POSTMiniDump
             List<Data.PModuleInfo> moduleslist = new List<Data.PModuleInfo>();
 
             moduleslist = Modules.find_modules(dc.hProcess);
-            if (moduleslist.Count == 0)
+
+            if (moduleslist == null || moduleslist.Count == 0)
             {
-                //MessageBox.Show("Could not find modules");
                 return null;
             }
             
@@ -228,6 +228,8 @@ namespace POSTMiniDump
             
             foreach (Data.PModuleInfo module in moduleslist)
             {
+                if (module == null)
+                    continue;
                 number_of_modules++;
                 module.name_rva = dc.rva;
                 uint full_name_length = (uint)module.dll_name.ToString().Length;
@@ -342,8 +344,12 @@ namespace POSTMiniDump
 
         private static bool is_important_module(IntPtr address, List<Data.PModuleInfo> module_list)
         {
+            if (module_list == null)
+                return false;
             foreach (Data.PModuleInfo curr_module in module_list)
             {
+                if (curr_module == null)
+                    continue;
                 //IntPtr rva = IntPtr.Add((IntPtr)curr_module.moduleinfo.lpBaseOfDll, (int)curr_module.moduleinfo.SizeOfImage);
                 IntPtr rva = new IntPtr(curr_module.moduleinfo.lpBaseOfDll.ToInt64() + (int)curr_module.moduleinfo.SizeOfImage);
                 if ((ulong)address >= (ulong)curr_module.moduleinfo.lpBaseOfDll && (ulong)address < (ulong)rva)
@@ -583,7 +589,7 @@ namespace POSTMiniDump
             }
             
             List<Data.PModuleInfo> modules_list = write_module_list_stream(dc);
-            if (modules_list.Count == 0)
+            if (modules_list == null || modules_list.Count == 0)
             {
                 //MessageBox.Show("Failed to get modules list!");
                 return false;
@@ -591,7 +597,7 @@ namespace POSTMiniDump
 
             List<Data.MiniDumpMemoryDescriptor64> memory_ranges = new List<Data.MiniDumpMemoryDescriptor64>();
             memory_ranges = write_memory64_list_stream(dc, modules_list);
-            if (memory_ranges.Count == 0)
+            if (memory_ranges == null || memory_ranges.Count == 0)
             {
                 //MessageBox.Show("Failed to get memory ranges!");
                 return false;
